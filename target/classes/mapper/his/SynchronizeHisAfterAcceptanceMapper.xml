@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dincher.project.scm.mapper.SynchronizeHisAfterAcceptanceMapper">
+
+
+    <update id="updateBatchByDetailIdAndInvoiceNoOracle" >
+        update PORTAL56_HIS.YGPT_YP_PSXX
+--         update YGPT_YP_PSXX
+        set
+            fnode = 2
+        where ORDERDETAILID = #{orderdetailId}
+        and INVOICEID = #{invoiceNo}
+        and (fnode=0 or fnode=1)
+    </update>
+
+    <select id="selectDataByDetailIdAndInvoiceNoOracle" resultType="com.dincher.project.scm.domain.DTO.HisUnsynchronizedOracleDataDTO">
+        select
+            DISTRIBUTIONSERIALID
+        from PORTAL56_HIS.YGPT_YP_PSXX
+--         from YGPT_YP_PSXX
+        where ORDERDETAILID = #{orderdetailId}
+          and INVOICEID = #{invoiceNo}
+          and (fnode=0 or fnode=1)
+
+    </select>
+
+    <select id="selectDataByDetailIdAndInvoiceNoOracleByfnode5" resultType="com.dincher.project.scm.domain.DTO.HisUnsynchronizedOracleDataDTO">
+        select
+            DISTRIBUTIONSERIALID
+        from PORTAL56_HIS.YGPT_YP_PSXX
+--         from YGPT_YP_PSXX
+        where ORDERDETAILID = #{orderdetailId}
+          and INVOICEID = #{invoiceNo}
+          and fnode=5
+
+    </select>
+
+</mapper>
+
+

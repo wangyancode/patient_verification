@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dincher.project.scm.mapper.DeliveryOrderMapper">
+
+    <select id="selectDataList" resultType="DeliveryOrderVO">
+        select
+        a.box_no, a.group_no, a.distribute_time, a.distribute_code, a.delete_flag,
+        a.create_by, a.create_datetime, a.update_by, a.update_datetime,
+        a.check_status, a.check_datetime
+        from scm_delivery_order a
+        <where>
+            a.delete_flag=0
+            <if test="boxNo != null and boxNo != ''">
+                and a.box_no = #{boxNo}
+            </if>
+            <if test="groupNo != null and groupNo != ''">
+                and a.group_no = #{groupNo}
+            </if>
+            <if test="distributeTime != null">
+                and a.distribute_time = #{distributeTime}
+            </if>
+            <if test="distributeCode != null and distributeCode != ''">
+                and a.distribute_code = #{distributeCode}
+            </if>
+            <if test="createBy != null">
+                and a.create_by = #{createBy}
+            </if>
+            <if test="createDatetime != null">
+                and a.create_datetime = #{createDatetime}
+            </if>
+            <if test="updateBy != null">
+                and a.update_by = #{updateBy}
+            </if>
+            <if test="updateDatetime != null">
+                and a.update_datetime = #{updateDatetime}
+            </if>
+            <if test="supplierCode != null and supplierCode != ''">
+                and a.supplier_code = #{supplierCode}
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                and a.supplier_name = #{supplierName}
+            </if>
+            <if test="checkStatus != null and checkStatus != ''">
+                and a.check_status = #{checkStatus}
+            </if>
+            <if test="checkDatetime != null">
+                and a.check_datetime = #{checkDatetime}
+            </if>
+        </where>
+    </select>
+
+    <select id="allStatusQueryPage" resultType="DeliveryOrderQueryReturnDTO" parameterType="DeliveryOrderQueryDTO">
+        select
+        a.box_no, a.group_no, a.distribute_time, a.distribute_code, a.delete_flag,
+        a.create_by, a.create_datetime, a.update_by, a.update_datetime,
+        a.check_status, a.check_datetime, sdc.distribute_name, t2.invoice_no
+        from scm_delivery_order a
+        left join scm_delivery_company sdc on a.distribute_code = sdc.distribute_code
+        LEFT JOIN (
+        SELECT
+        t1.box_no,
+        GROUP_CONCAT(distinct t1.invoice_no) AS invoice_no
+        FROM
+        scm_delivery_order_details t1
+        WHERE
+        t1.delete_flag = 0
+        GROUP BY
+        t1.box_no
+        ) t2 ON a.box_no = t2.box_no
+        <where>
+            a.delete_flag=0
+            <if test="queryCriteria != null and queryCriteria != ''">
+                and (a.box_no like concat('%',#{queryCriteria},'%') or t2.invoice_no like concat('%',#{queryCriteria},'%') )
+            </if>
+            <if test="checkStatus != null and checkStatus != ''">
+                and a.check_status = #{checkStatus}
+            </if>
+            <if test="distributeCodes != null and distributeCodes.size > 0">
+                and a.distribute_code in
+                <foreach item="code" collection="distributeCodes" open="(" separator="," close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="distributeTimeStart != null  and distributeTimeEnd != null ">
+                and DATE_FORMAT(a.distribute_time,'%Y-%m-%d %H:%i:%s')
+                BETWEEN #{distributeTimeStart} and #{distributeTimeEnd}
+            </if>
+
+        </where>
+        <if test="checkStatus != null and checkStatus != ''">
+            <if test="checkStatus == 1">
+                order by a.distribute_time desc
+            </if>
+            <if test="checkStatus == 2">
+                order by a.distribute_time desc
+            </if>
+            <if test="checkStatus == 3">
+                order by a.update_datetime desc
+            </if>
+        </if>
+    </select>
+
+    <select id="queryOrderAndInvoiceNo" resultType="DeliveryOrderQueryResponseDTO"
+            parameterType="DeliveryOrderDetailRequestDTO">
+        select
+        a.box_no, a.group_no, a.distribute_time, a.distribute_code, a.delete_flag,
+        a.create_by, a.create_datetime, a.update_by, a.update_datetime,
+        a.check_status, a.check_datetime, sdc.distribute_name, t2.invoice_no
+        from scm_delivery_order a
+        left join scm_delivery_company sdc on a.distribute_code = sdc.distribute_code
+        LEFT JOIN (
+        SELECT
+        t1.box_no,
+        GROUP_CONCAT(distinct t1.invoice_no) AS invoice_no
+        FROM
+        scm_delivery_order_details t1
+        WHERE
+        t1.delete_flag = 0
+        GROUP BY
+        t1.box_no
+        ) t2 ON a.box_no = t2.box_no
+        <where>
+            a.delete_flag=0
+            <if test="boxNo != null and boxNo != ''">
+                and a.box_no = #{boxNo}
+            </if>
+        </where>
+    </select>
+
+    <select id="queryOrderAndInvoiceNoAll" resultType="DeliveryOrderQueryResponseDTO"
+            parameterType="DeliveryOrderDetailRequestDTO">
+        select
+        a.box_no, a.group_no, a.distribute_time, a.distribute_code, a.delete_flag,
+        a.create_by, a.create_datetime, a.update_by, a.update_datetime,
+        a.check_status, a.check_datetime, sdc.distribute_name, t2.invoice_no
+        from scm_delivery_order a
+        left join scm_delivery_company sdc on a.distribute_code = sdc.distribute_code
+        LEFT JOIN (
+        SELECT
+        t1.box_no,
+        GROUP_CONCAT(distinct t1.invoice_no) AS invoice_no
+        FROM
+        scm_delivery_order_details t1
+        WHERE
+        t1.delete_flag = 0
+        GROUP BY
+        t1.box_no
+        ) t2 ON a.box_no = t2.box_no
+        <where>
+            a.delete_flag=0
+            <if test="drugCheckStatus != null and drugCheckStatus != ''">
+                <if test="drugCheckStatus == 1">
+                    and (a.check_status = '1' or a.check_status = '2')
+                </if>
+                <if test="drugCheckStatus == 2">
+                    and (a.check_status = '2' or a.check_status = '3')
+                </if>
+            </if>
+            <if test="boxNo != null and boxNo != ''">
+                and a.box_no = #{boxNo}
+            </if>
+            <if test="groupNo != null and groupNo != ''">
+                and a.group_no = #{groupNo}
+            </if>
+        </where>
+    </select>
+
+    <select id="reverseCheckSpecificDrugDetails" resultType="DeliveryOrderDetailsVO"
+            parameterType="DeliveryOrderDetailsVO">
+        SELECT
+        sdo.id,
+        sdo.distributionserial_id,
+        sdo.order_id,
+        sdo.orderdetail_id,
+        sdo.invoice_no,
+        sdo.platform_drug_code,
+        sdo.procurecatalog_id,
+        sdo.province_id,
+        sdo.drug_name,
+        case sdo.drug_type
+        WHEN '1' THEN '西药'
+        WHEN '2' THEN '中成药'
+        WHEN '3' THEN '草药'
+        ELSE ''
+        END drug_type,
+        sdo.drug_specs,
+        sdo.form_name,
+        sdo.production_code,
+        sdo.production_name,
+        sdo.license_no,
+        sdo.approval_no,
+        sdo.valid_date,
+        sdo.order_count,
+        sdo.distribute_count,
+        sdo.unit,
+        sdo.distribute_time,
+        sdo.price,
+        sdo.amount,
+        sdo.supplier_code,
+        sdo.supplier_name,
+        sdo.supplier_drug_code,
+        case sdo.is_expensive
+        WHEN '1' THEN '是'
+        WHEN '2' THEN '否'
+        ELSE '否'
+        END is_expensive,
+        sdo.delete_flag,
+        sdo.create_by,
+        sdo.create_datetime,
+        sdo.update_by,
+        sdo.update_datetime,
+        sdo.box_no,
+        sdo.drug_check_status,
+        sdo.drug_check_datetime,
+        sdo.check_count
+        FROM
+        scm_delivery_order a
+        LEFT JOIN scm_delivery_order_details sdo ON a.box_no = sdo.box_no
+        <where>
+            a.delete_flag=0
+            and sdo.delete_flag=0
+            <if test="groupNo != null and groupNo != ''">
+                and a.group_no = #{groupNo}
+            </if>
+            <if test="drugName != null and drugName != ''">
+                and sdo.drug_name = #{drugName}
+            </if>
+            <if test="approvalNo != null and approvalNo != ''">
+                and sdo.approval_no = #{approvalNo}
+            </if>
+<!--            <if test="distributeCount != null and distributeCount != ''">-->
+<!--                and sdo.distribute_count = #{distributeCount}-->
+<!--            </if>-->
+        </where>
+    </select>
+
+    <select id="allStatusQueryCount" resultType="DeliveryOrderQueryCountDTO" parameterType="DeliveryOrderQueryDTO">
+        select
+        SUM(IF(a.check_status='1',1,0)) toBeAcceptedCount,
+        SUM(IF(a.check_status='2',1,0)) duringAcceptanceCount,
+        SUM(IF(a.check_status='3',1,0)) acceptedCount
+        from scm_delivery_order a
+        LEFT JOIN (
+        SELECT
+        t1.box_no,
+        GROUP_CONCAT(distinct t1.invoice_no) AS invoice_no
+        FROM
+        scm_delivery_order_details t1
+        WHERE
+        t1.delete_flag = 0
+        GROUP BY
+        t1.box_no
+        ) t2 ON a.box_no = t2.box_no
+        <where>
+            a.delete_flag=0
+            <if test="queryCriteria != null and queryCriteria != ''">
+                and (a.box_no like concat('%',#{queryCriteria},'%') or t2.invoice_no like concat('%',#{queryCriteria},'%') )
+            </if>
+            <if test="checkStatus != null and checkStatus != ''">
+                and a.check_status = #{checkStatus}
+            </if>
+            <if test="distributeCodes != null and distributeCodes.size > 0">
+                and a.distribute_code in
+                <foreach item="code" collection="distributeCodes" open="(" separator="," close=")">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="distributeTimeStart != null  and distributeTimeEnd != null ">
+                and DATE_FORMAT(a.distribute_time,'%Y-%m-%d %H:%i:%s')
+                BETWEEN #{distributeTimeStart} and #{distributeTimeEnd}
+            </if>
+
+        </where>
+        <if test="checkStatus != null and checkStatus != ''">
+            <if test="checkStatus == 1">
+                order by a.distribute_time desc
+            </if>
+            <if test="checkStatus == 2">
+                order by a.distribute_time desc
+            </if>
+            <if test="checkStatus == 3">
+                order by a.update_datetime desc
+            </if>
+        </if>
+
+    </select>
+</mapper>
+
+

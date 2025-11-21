@@ -1,0 +1,29 @@
+package com.dincher.project.system.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.dincher.project.system.domain.dto.UserPageDTO;
+import com.dincher.project.system.domain.dto.UserQueryDTO;
+import com.dincher.project.system.domain.vo.UserVO;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 用户账号信息(sys_user)数据库访问层
+ *
+ * @author wangxiao
+ * @date 2023-07-25 14:19:21
+ */
+public interface UserMapper extends BaseMapper<UserVO> {
+
+    List<UserVO> selectDataList(UserPageDTO userPageDTO);
+
+    UserVO getPersonalInfo(Integer userId);
+
+    List<UserVO> getUserListByQueryParam(UserQueryDTO userQueryDTO);
+
+    UserVO getUserByUserAccount(String useAccount);
+
+    List<Map<String, Object>> selectRegionList(Integer userId);
+}
+

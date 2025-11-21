@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dincher.project.scm.mapper.HisUnsynchronizedDeliveryOrderDetailsMapper">
+
+    <select id="selectDataList" resultType="HisUnsynchronizedDeliveryOrderDetailsVO">
+        select
+            a.id, a.box_no, a.order_id, a.orderdetail_id, a.distributionserial_id, a.invoice_no, a.platform_drug_code, a.procurecatalog_id, a.province_id, a.drug_name, a.drug_type, a.drug_specs, a.form_name, a.production_code, a.production_name, a.license_no, a.approval_no, a.valid_date, a.order_count, a.distribute_count, a.unit, a.distribute_time, a.price, a.amount, a.supplier_code, a.supplier_name, a.supplier_drug_code, a.is_expensive, a.drug_check_status, a.drug_check_datetime, a.check_count, a.check_user_id, a.delete_flag, a.create_by, a.create_datetime, a.update_by, a.update_datetime, a.pieces, a.distribute_code, a.ajust_count
+        from scm_his_unsynchronized_delivery_order_details a
+        <where>
+            a.delete_flag=0
+            <if test="id != null">
+                and a.id = #{id}
+            </if>
+            <if test="boxNo != null and boxNo != ''">
+                and a.box_no = #{boxNo}
+            </if>
+            <if test="orderId != null and orderId != ''">
+                and a.order_id = #{orderId}
+            </if>
+            <if test="orderdetailId != null and orderdetailId != ''">
+                and a.orderdetail_id = #{orderdetailId}
+            </if>
+            <if test="distributionserialId != null and distributionserialId != ''">
+                and a.distributionserial_id = #{distributionserialId}
+            </if>
+            <if test="invoiceNo != null and invoiceNo != ''">
+                and a.invoice_no = #{invoiceNo}
+            </if>
+            <if test="platformDrugCode != null and platformDrugCode != ''">
+                and a.platform_drug_code = #{platformDrugCode}
+            </if>
+            <if test="procurecatalogId != null and procurecatalogId != ''">
+                and a.procurecatalog_id = #{procurecatalogId}
+            </if>
+            <if test="provinceId != null and provinceId != ''">
+                and a.province_id = #{provinceId}
+            </if>
+            <if test="drugName != null and drugName != ''">
+                and a.drug_name = #{drugName}
+            </if>
+            <if test="drugType != null and drugType != ''">
+                and a.drug_type = #{drugType}
+            </if>
+            <if test="drugSpecs != null and drugSpecs != ''">
+                and a.drug_specs = #{drugSpecs}
+            </if>
+            <if test="formName != null and formName != ''">
+                and a.form_name = #{formName}
+            </if>
+            <if test="productionCode != null and productionCode != ''">
+                and a.production_code = #{productionCode}
+            </if>
+            <if test="productionName != null and productionName != ''">
+                and a.production_name = #{productionName}
+            </if>
+            <if test="licenseNo != null and licenseNo != ''">
+                and a.license_no = #{licenseNo}
+            </if>
+            <if test="approvalNo != null and approvalNo != ''">
+                and a.approval_no = #{approvalNo}
+            </if>
+            <if test="validDate != null">
+                and a.valid_date = #{validDate}
+            </if>
+            <if test="orderCount != null">
+                and a.order_count = #{orderCount}
+            </if>
+            <if test="distributeCount != null">
+                and a.distribute_count = #{distributeCount}
+            </if>
+            <if test="unit != null and unit != ''">
+                and a.unit = #{unit}
+            </if>
+            <if test="distributeTime != null">
+                and a.distribute_time = #{distributeTime}
+            </if>
+            <if test="price != null">
+                and a.price = #{price}
+            </if>
+            <if test="amount != null">
+                and a.amount = #{amount}
+            </if>
+            <if test="supplierCode != null and supplierCode != ''">
+                and a.supplier_code = #{supplierCode}
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                and a.supplier_name = #{supplierName}
+            </if>
+            <if test="supplierDrugCode != null and supplierDrugCode != ''">
+                and a.supplier_drug_code = #{supplierDrugCode}
+            </if>
+            <if test="isExpensive != null and isExpensive != ''">
+                and a.is_expensive = #{isExpensive}
+            </if>
+            <if test="drugCheckStatus != null and drugCheckStatus != ''">
+                and a.drug_check_status = #{drugCheckStatus}
+            </if>
+            <if test="drugCheckDatetime != null">
+                and a.drug_check_datetime = #{drugCheckDatetime}
+            </if>
+            <if test="checkCount != null">
+                and a.check_count = #{checkCount}
+            </if>
+            <if test="checkUserId != null">
+                and a.check_user_id = #{checkUserId}
+            </if>
+            <if test="createBy != null">
+                and a.create_by = #{createBy}
+            </if>
+            <if test="createDatetime != null">
+                and a.create_datetime = #{createDatetime}
+            </if>
+            <if test="updateBy != null">
+                and a.update_by = #{updateBy}
+            </if>
+            <if test="updateDatetime != null">
+                and a.update_datetime = #{updateDatetime}
+            </if>
+            <if test="pieces != null and pieces != ''">
+                and a.pieces = #{pieces}
+            </if>
+            <if test="distributeCode != null and distributeCode != ''">
+                and a.distribute_code = #{distributeCode}
+            </if>
+            <if test="ajustCount != null and ajustCount != ''">
+                and a.ajust_count = #{ajustCount}
+            </if>
+        </where>
+    </select>
+
+
+    <delete id="deleteDataById" parameterType="Integer">
+        delete from scm_his_unsynchronized_delivery_order_details where id=#{id}
+    </delete>
+</mapper>
+
+

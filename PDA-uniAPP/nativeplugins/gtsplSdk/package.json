@@ -1,0 +1,30 @@
+{
+	"name": "gtsplSdk",
+	"id": "gtsplSdk",
+	"version": "0.0.0.4",
+	"description": "java_SDK",
+	"_dp_type":"nativeplugin",
+	"_dp_nativeplugin":{
+		"android":{
+			"plugins":[
+				{
+					"type":"module",
+					"name":"gtsplSdk-wifi",
+					"class":"com.gainscha.gtspl_sdk.GTSPLWIFIActivity"
+				},
+				{
+					"type":"module",
+					"name":"gtsplSdk-bt",
+					"class":"com.gainscha.gtspl_sdk.GTSPLActivity"
+				},
+				{
+					"type":"module",
+					"name":"gtsplSdk-usb",
+					"class":"com.gainscha.gtspl_sdk.GTSPLUsbActivity"
+				}
+			],
+			"integrateType": "aar",
+			"minSdkVersion:":19
+		}
+	}
+}

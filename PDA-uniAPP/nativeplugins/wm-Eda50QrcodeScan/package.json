@@ -1,0 +1,22 @@
+{
+	"name": "wm-Eda50QrcodeScan",
+	"id": "wm-Eda50QrcodeScan",
+	"version": "1.0.0",
+	"description": "wm-Eda50QrcodeScan",
+	"_dp_type": "nativeplugin",
+	"_dp_nativeplugin": {
+		"android": {
+			"plugins": [{
+				"type": "module",
+				"name": "wm-Eda50QrcodeScan",
+				"class": "cn.wm.eda50.Eda50ScanModule"
+			}],
+			"compileOptions": {
+				"sourceCompatibility": "1.8",
+				"targetCompatibility": "1.8"
+			},
+			"integrateType": "aar",
+			"minSdkVersion": 23
+		}
+	}
+}
