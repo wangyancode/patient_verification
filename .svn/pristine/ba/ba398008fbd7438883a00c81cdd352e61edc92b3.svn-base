@@ -1,0 +1,289 @@
+package com.dincher.project.scm.service;
+
+
+
+import cn.hutool.core.date.DateUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.dincher.common.utils.StringUtils;
+import com.dincher.common.utils.http.HttpUtils;
+import com.dincher.framework.web.domain.ResponseEntity;
+import com.dincher.framework.web.util.ResponseUtil;
+import com.dincher.project.scm.domain.PatientRecords;
+
+import com.dincher.project.scm.domain.vo.ConfirmVO;
+import com.dincher.project.scm.mapper.PatientRecordsMapper;
+import com.dincher.project.system.domain.entity.User;
+import com.dincher.project.system.domain.entity.UserRegion;
+import com.dincher.project.system.domain.vo.UserRegionVO;
+import com.dincher.project.system.domain.vo.UserVO;
+import com.dincher.project.system.mapper.UserRegionMapper;
+import com.dincher.project.system.service.UserService;
+import eu.bitwalker.useragentutils.UserAgent;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+
+@Slf4j
+@Service
+@Transactional
+public class PatientRecordsService extends BaseService<PatientRecords> {
+
+    @Autowired
+    private PatientRecordsMapper patientRecordsMapper;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private UserRegionMapper userRegionMapper;
+
+
+    //分页查询
+    public Page<PatientRecords> selectPageList(PatientRecords patientRecords) {
+        Page page = new Page(patientRecords.getPageNo(), patientRecords.getPageSize());
+
+        QueryWrapper<PatientRecords> queryWrapper = new QueryWrapper<>();
+
+        //类型 1管理员 2普通技师 3科主任
+        //权限 普通技师只能看自己的  科主任可以看本科室的  管理员可以看所有
+        UserVO userVO =  userService.getPersonalInfo() ;
+        if(2 == userVO.getType()){
+            queryWrapper.eq("createUserName", userVO.getUserName()) ;
+        }else if(3 == userVO.getType()){
+            QueryWrapper<UserRegionVO> queryWrapper2 = new QueryWrapper<>();
+            queryWrapper2.eq("userId", userVO.getUserId()) ;
+            queryWrapper2.eq("deleteFlag","0") ;
+            List<UserRegionVO> userRegionVOList =  userRegionMapper.selectList(queryWrapper2) ;
+           List<String> stringList = userRegionVOList.stream()
+                    .map(UserRegionVO::getRegionValue)
+                    .collect(Collectors.toList());
+           queryWrapper.in("ckdpt_code", stringList);
+        }
+
+        if(StringUtils.isNotEmpty(patientRecords.getPersonName())){
+            queryWrapper.like("personName", patientRecords.getPersonName());
+        }
+
+        if(StringUtils.isNotEmpty(patientRecords.getNumber())){
+            queryWrapper.eq("number", patientRecords.getNumber());
+        }
+
+        if(StringUtils.isNotEmpty(patientRecords.getRpt_dept())){
+            queryWrapper.like("rpt_dept", patientRecords.getRpt_dept());
+        }
+
+        if(StringUtils.isNotEmpty(patientRecords.getProj_name())){
+            queryWrapper.like("proj_name", patientRecords.getProj_name());
+        }
+
+        if(StringUtils.isNotEmpty(patientRecords.getType())){
+            queryWrapper.eq("type", patientRecords.getType());
+        }
+
+        if(StringUtils.isNotEmpty(patientRecords.getCkpt_name())){
+            queryWrapper.like("ckpt_name", patientRecords.getCkpt_name());
+        }
+
+
+        //核对时间
+        if (StringUtils.isNotEmpty(patientRecords.getStartTime())) {
+            queryWrapper.ge("DATE_FORMAT(checkTime, '%Y-%m-%d')", patientRecords.getStartTime());
+        }
+        //核对时间
+        if (StringUtils.isNotEmpty(patientRecords.getEndTime())) {
+            queryWrapper.le("DATE_FORMAT(checkTime, '%Y-%m-%d')", patientRecords.getEndTime());
+        }
+        return patientRecordsMapper.selectPage(page,queryWrapper) ;
+    }
+
+
+
+    /**
+     *
+     *调用第三方查询接口
+     * @author wzn
+     * @date 2025/06/21 10:45
+     */
+    public List<Map<String,Object>> encapsulateData(String bar_code,String ckdpt_code){
+        String res = HttpUtils.sendGetCookie(" https://credit.gamesafe.qq.com/cgi-bin/qq/proxy/punish_query", "query_type=3&limit=10","");
+        JSONObject jsonObject = JSON.parseObject(res);
+        String name = jsonObject.getString("name");
+        //1、男，2、女
+        String sex = jsonObject.getString("sex");
+        if("1".equals(sex)){
+            sex = "男" ;
+        }else if("2".equals(sex)){
+            sex = "女" ;
+        }
+        String age = jsonObject.getString("age");
+
+        JSONArray details = (JSONArray) jsonObject.get("details");
+        List<PatientRecords> patientRecordsList = (List<PatientRecords>) JSONArray.parseArray(details.toString(), PatientRecords.class);
+
+        //类型  1门诊
+        List<PatientRecords> list1 = new ArrayList<>() ;
+        // 2急诊
+        List<PatientRecords> list2 = new ArrayList<>() ;
+        //3住院
+        List<PatientRecords> list3 = new ArrayList<>() ;
+        //4体检
+        List<PatientRecords> list4 = new ArrayList<>() ;
+        //todo 假装获取到数据
+        //封装前端数据
+        if(!CollectionUtils.isEmpty(patientRecordsList)){
+            for(PatientRecords pr : patientRecordsList){
+                pr.setBar_code(bar_code);
+                pr.setPersonName(name);
+                pr.setSex(sex);
+                pr.setAge(age);
+                pr.setType(pr.getOp_em_mark());
+                pr.setNumber(pr.getOp_em_no());
+                if("1".equals(pr.getType())){
+                    list1.add(pr) ;
+                }else if("2".equals(pr.getType())){
+                    list2.add(pr) ;
+                }else if("3".equals(pr.getType())){
+                    list3.add(pr) ;
+                }else if("4".equals(pr.getType())){
+                    list4.add(pr) ;
+                }
+            }
+
+        }
+
+        //封装数据
+        List<Map<String,Object>> mapList = new ArrayList<>() ;
+        Map<String,Object> map1 = new HashMap<>() ;
+        map1.put("type", "1") ;
+        map1.put("name", name) ;
+        map1.put("sex", sex) ;
+        map1.put("list", list1) ;
+        mapList.add(map1) ;
+
+        Map<String,Object> map2 = new HashMap<>() ;
+        map2.put("type", "2") ;
+        map2.put("name", name) ;
+        map2.put("sex", sex) ;
+        map2.put("list", list2) ;
+        mapList.add(map2) ;
+
+        Map<String,Object> map3 = new HashMap<>() ;
+        map3.put("type", "3") ;
+        map3.put("name", name) ;
+        map3.put("sex", sex) ;
+        map3.put("list", map3) ;
+        mapList.add(map3) ;
+
+        Map<String,Object> map4 = new HashMap<>() ;
+        map4.put("type", "4") ;
+        map4.put("name", name) ;
+        map4.put("sex", sex) ;
+        map4.put("list", map4) ;
+        mapList.add(map4) ;
+        return mapList ;
+    }
+
+
+    /**
+     *
+     *确认/再次确认按钮
+     * @author wzn
+     * @date 2025/06/21 11:40
+     */
+    public ResponseEntity confirm(ConfirmVO confirmVO){
+        User user = userService.getPersonalInfo() ;
+        for(PatientRecords pr : confirmVO.getPatientRecordsList()){
+            //校验
+            QueryWrapper<UserRegionVO> queryWrapper2 = new QueryWrapper<>();
+            queryWrapper2.eq("user_id", user.getUserId()) ;
+            queryWrapper2.eq("delete_flag","0") ;
+            List<UserRegionVO> userRegionVOList =  userRegionMapper.selectList(queryWrapper2) ;
+            List<String> stringList = userRegionVOList.stream()
+                    .map(UserRegionVO::getRegionValue)
+                    .collect(Collectors.toList());
+
+            if (!stringList.contains(pr.getRpc_code())) {
+                return ResponseUtil.error("患者身份核对失败,您所在科室与检查科室不一致") ;
+            }
+
+            if("3".equals(pr.getType())){
+                if(!confirmVO.getCode().equals(pr.getNumber())){
+                    return ResponseUtil.error("患者身份核对失败,申请单与患者信息不一致，请重新扫描患者腕带") ;
+                }
+            }
+
+        }
+
+        for(PatientRecords pr : confirmVO.getPatientRecordsList()){
+            if(null == pr.getPat_verify_time()){
+                //新增记录
+                pr.setCreateUser(user.getUserId()+"");
+                pr.setCreateUserName(user.getUserName());
+                pr.setCreateTime(new Date());
+                pr.setCheckTime(new Date());
+                pr.setIsDel(0);
+                patientRecordsMapper.insert(pr);
+            }else {
+                //再次确认  更新核实时间
+                QueryWrapper<PatientRecords> queryWrapper = new QueryWrapper<>();
+                queryWrapper.eq("rpt_no", pr.getRpt_no()) ;
+                PatientRecords patientRecords1 = patientRecordsMapper.selectOne(queryWrapper);
+                patientRecords1.setCheckTime(new Date());
+                patientRecordsMapper.updateById(patientRecords1);
+            }
+
+            //调用第三方接口确认
+            if(1==1){
+                //todo  返回成功 更改状态
+                QueryWrapper<PatientRecords> queryWrapper = new QueryWrapper<>();
+                queryWrapper.eq("rpt_no", pr.getRpt_no()) ;
+                PatientRecords patientRecords1 = patientRecordsMapper.selectOne(queryWrapper);
+                patientRecords1.setStatus("1");
+                patientRecordsMapper.updateById(patientRecords1);
+            }
+
+        }
+
+        return ResponseUtil.success("患者身份核对成功,申请单信息与检查信息一致") ;
+    }
+
+
+    /**
+     *
+     *
+     * @author wzn
+     * @date 2025/06/21 14:50
+     */
+    public void updateStatus(){
+        QueryWrapper<PatientRecords> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("isDel", "0") ;
+        queryWrapper.ne("status", "1") ;
+       List<PatientRecords> patientRecordsList =  patientRecordsMapper.selectList(queryWrapper) ;
+       if(!CollectionUtils.isEmpty(patientRecordsList)){
+           for(PatientRecords pr : patientRecordsList){
+               //todo  调用第三方确认接口
+
+               //成功之后修改状态
+               pr.setStatus("1");
+               patientRecordsMapper.updateById(pr) ;
+           }
+
+
+       }
+    }
+
+
+
+
+
+}

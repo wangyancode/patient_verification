@@ -1,0 +1,324 @@
+<template>
+  <div style="height: 100%">
+    <div class="login-header">
+      <img
+        :src="require('@/assets/images/company_logo.png')"
+        alt=""
+        style="height: 30px; margin-left: 7%"
+      />
+      <el-divider
+        direction="vertical"
+        content-position="center"
+        style="height: 30px; padding: 0px 20px"
+      ></el-divider>
+      <div class="welcome-login">欢迎登录</div>
+    </div>
+    <div class="login">
+      <div class="login_form_bg">
+        <el-form
+          ref="loginForm"
+          :model="loginForm"
+          :rules="loginRules"
+          class="login-form"
+        >
+          <h3 class="title">医技检查身份核对系统</h3>
+          <el-form-item prop="username">
+            <el-input
+              v-model="loginForm.username"
+              type="text"
+              auto-complete="off"
+              placeholder="账号"
+            >
+              <svg-icon
+                slot="prefix"
+                icon-class="user2"
+                class="el-input__icon input-icon"
+              />
+            </el-input>
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input
+              v-model="loginForm.password"
+              type="password"
+              auto-complete="off"
+              placeholder="密码"
+              @keyup.enter.native="handleLogin"
+            >
+              <svg-icon
+                slot="prefix"
+                icon-class="password2"
+                class="el-input__icon input-icon"
+              />
+            </el-input>
+          </el-form-item>
+          <!-- <el-form-item prop="code" v-if="captchaEnabled">
+            <el-input v-model="loginForm.code" auto-complete="off" placeholder="验证码" style="width: 63%"
+              @keyup.enter.native="handleLogin">
+              <svg-icon slot="prefix" icon-class="validCode" class="el-input__icon input-icon" />
+            </el-input>
+            <div class="login-code">
+              <img :src="codeUrl" @click="getCode" class="login-code-img" />
+            </div>
+          </el-form-item> -->
+          <el-checkbox
+            v-model="loginForm.rememberMe"
+            style="margin: 0px 0px 18px 0px"
+            >自动登录</el-checkbox
+          >
+          <el-form-item style="width: 100%">
+            <el-button
+              :loading="loading"
+              size="medium"
+              type="primary"
+              style="width: 100%; height: 48px; font-size: 18px"
+              @click.native.prevent="handleLogin"
+            >
+              <span v-if="!loading">登 录</span>
+              <span v-else>登 录 中...</span>
+            </el-button>
+            <div style="float: right" v-if="register">
+              <router-link class="link-type" :to="'/register'"
+                >立即注册</router-link
+              >
+            </div>
+            <!-- <div style="color: #2c9ef7;">
+              <a href="http://192.168.1.242/javafxdemo-0.0.1-SNAPSHOT-1.0.exe" target="_bank">辅助程序</a>
+            </div> -->
+          </el-form-item>
+        </el-form>
+      </div>
+      <div class="login-back">
+        <div class="login-back-img"></div>
+      </div>
+      <!--  底部  -->
+      <!-- <div class="el-login-footer">
+      <span>Copyright © 2018-2022 ruoyi.vip All Rights Reserved.</span>
+    </div> -->
+    </div>
+  </div>
+</template>
+
+<script>
+import { getCodeImg, getMac, getAuthCodeFlag } from "@/api/login";
+import Cookies from "js-cookie";
+import { encrypt, decrypt } from "@/utils/jsencrypt";
+
+export default {
+  name: "Login",
+  data() {
+    return {
+      codeUrl: "",
+      loginForm: {
+        username: "",
+        password: "",
+        rememberMe: false,
+        code: "",
+        uuid: "",
+      },
+      loginRules: {
+        username: [
+          { required: true, trigger: "blur", message: "请输入您的账号" },
+        ],
+        password: [
+          { required: true, trigger: "blur", message: "请输入您的密码" },
+        ],
+        code: [{ required: true, trigger: "change", message: "请输入验证码" }],
+      },
+      loading: false,
+      // 验证码开关
+      captchaEnabled: true,
+      // 注册开关
+      register: false,
+      redirect: undefined,
+      sMacAddr: "",
+    };
+  },
+  watch: {
+    $route: {
+      handler: function (route) {
+        this.redirect = route.query && route.query.redirect;
+      },
+      immediate: true,
+    },
+  },
+  mounted() {},
+  created() {
+    this.getCode();
+    this.getCookie();
+  },
+  methods: {
+    getCode() {
+      getCodeImg().then((res) => {
+        this.captchaEnabled = res.data.captchaEnabled == "1" ? true : false;
+        if (this.captchaEnabled) {
+          this.codeUrl = "data:image/gif;base64," + res.data.img;
+          this.loginForm.uuid = res.data.uuid;
+        }
+      });
+    },
+    getCookie() {
+      const username = Cookies.get("username");
+      const password = Cookies.get("password");
+      const rememberMe = Cookies.get("rememberMe");
+      this.loginForm = {
+        username: username === undefined ? this.loginForm.username : username,
+        password:
+          password === undefined ? this.loginForm.password : decrypt(password),
+        rememberMe: rememberMe === undefined ? false : Boolean(rememberMe),
+      };
+    },
+    handleLogin() {
+      this.$refs.loginForm.validate((valid) => {
+        if (valid) {
+          this.loading = true;
+          if (this.loginForm.rememberMe) {
+            Cookies.set("username", this.loginForm.username, { expires: 30 });
+            Cookies.set("password", encrypt(this.loginForm.password), {
+              expires: 30,
+            });
+            Cookies.set("rememberMe", this.loginForm.rememberMe, {
+              expires: 30,
+            });
+          } else {
+            Cookies.remove("username");
+            Cookies.remove("password");
+            Cookies.remove("rememberMe");
+          }
+          this.$store
+            .dispatch("Login", this.loginForm)
+            .then(() => {
+              this.$router.push({ path: this.redirect || "/" }).catch(() => {});
+            })
+            .catch(() => {
+              this.loading = false;
+              if (this.captchaEnabled) {
+                this.getCode();
+              }
+            })
+            .finally(() => {
+              this.loading = false;
+            });
+        }
+      });
+    },
+  },
+};
+</script>
+
+<style lang="scss" scoped>
+.login-header {
+  height: 60px;
+  line-height: 60px;
+  background: #fff;
+  display: flex;
+  padding: 15px 30px;
+
+  .welcome-login {
+    font-size: 16px;
+    line-height: 30px;
+  }
+}
+
+.login {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: calc(100% - 60px);
+  background: #fff url("../assets/images/login-back.jpg") no-repeat center /
+    auto 100%;
+  background-position: right;
+}
+
+.title {
+  text-align: center;
+  margin: 0px auto 100px auto;
+  // color: #2c9ef7;
+  line-height: 45px;
+  font-weight: bold;
+  vertical-align: middle;
+  font-family: Avenir, Helvetica Neue, Arial, Helvetica, sans-serif;
+  -webkit-box-reflect: below 18px -webkit-linear-gradient(transparent, transparent
+        30%, rgba(255, 255, 255, 0.1));
+  font: 600 34px Avenir, Helvetica Neue, Arial, Helvetica, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+.login-form {
+  // position: relative;
+  // left: -110%;
+  // top: 9%;
+  // border-radius: 12px;
+  // // background: #ffffff;
+  margin-left: calc(21% + 60px);
+  width: 474px;
+
+  ::v-deep .el-input {
+    height: 48px;
+    line-height: 48px;
+    background: #fff;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.6);
+
+    input {
+      color: #808080;
+      background: rgba(255, 255, 255, 0.1);
+      font-size: 16px;
+      height: 48px;
+    }
+  }
+
+  ::v-deep .el-input__inner {
+    padding-left: 38px !important;
+  }
+
+  .input-icon {
+    height: 48px;
+    width: 18px;
+    margin-left: 8px;
+    font-size: 20px;
+    color: #2c9ef7;
+  }
+}
+::v-deep .el-form-item {
+  margin-bottom: 18px;
+}
+
+.login-tip {
+  font-size: 13px;
+  text-align: center;
+  color: #bfbfbf;
+}
+
+.login-code {
+  width: 35%;
+  height: 48px;
+  float: right;
+
+  img {
+    cursor: pointer;
+    vertical-align: middle;
+  }
+}
+
+.el-login-footer {
+  height: 40px;
+  line-height: 40px;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  color: #fff;
+  font-family: Arial;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.login-code-img {
+  height: 48px;
+}
+
+::v-deep .el-divider--vertical {
+  height: 30px;
+  margin: 0 15px;
+}
+</style>

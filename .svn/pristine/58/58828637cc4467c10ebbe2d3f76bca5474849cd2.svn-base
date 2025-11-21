@@ -1,0 +1,69 @@
+package com.dincher.project.scm.controller;
+
+
+import com.dincher.framework.web.controller.BaseController;
+import com.dincher.framework.web.domain.ResponseEntity;
+import com.dincher.framework.web.util.ResponseUtil;
+import com.dincher.project.scm.domain.PatientRecords;
+import com.dincher.project.scm.domain.vo.ConfirmVO;
+import com.dincher.project.scm.service.PatientRecordsService;
+import com.ewell.sdk.exception.SDKException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.constraints.NotBlank;
+
+
+@RestController
+@RequestMapping("/patient")
+@Validated  // 注意这个注解
+public class PatientRecordsController extends BaseController{
+
+    @Autowired
+    private PatientRecordsService patientRecordsService;
+
+
+    /**
+     *患者身份核对记录
+     * @author wzn
+     * @date 2025/06/20 17:08
+     */
+    @PostMapping("page")
+    public ResponseEntity getList(@RequestBody PatientRecords patientRecords) {
+        return ResponseUtil.success(patientRecordsService.selectPageList(patientRecords));
+    }
+
+
+    /**
+     *
+     *PDA 首页查询接口
+     * @author wzn
+     * @date 2025/06/21 11:37
+     */
+    @GetMapping("encapsulateData")
+    public ResponseEntity encapsulateData(@NotBlank(message = "bar_code 不能为空") String bar_code,
+                                           @NotBlank(message = "ckdpt_code 不能为空") String ckdpt_code) {
+        return ResponseUtil.success(patientRecordsService.encapsulateData(bar_code,ckdpt_code));
+    }
+
+
+
+    /**
+     *批量确认/再次确认
+     * @author wzn
+     * @date 2025/06/21 14:08
+     */
+    @PostMapping("confirm")
+    public ResponseEntity confirm(@RequestBody ConfirmVO confirmVO) {
+        try {
+            return patientRecordsService.confirm(confirmVO);
+        } catch (SDKException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+
+}
+

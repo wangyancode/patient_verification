@@ -1,0 +1,193 @@
+<template>
+	<view class="main">
+		<view class="main-head">
+			<view class="main-head-content">
+				<view class="u-demo-title">
+					<u-row>
+						<u-col span="12">
+							<view class="homePage">
+								首页
+							</view>
+						</u-col>
+					</u-row>
+				</view>
+			</view>
+		</view>
+		<u-gap height="160"></u-gap>
+		<view class="container">
+			<u-image width="100%" height="300rpx" src='../../static/images/banner.png'></u-image>
+		</view>
+		<view class="messages">
+			<view class="message-person">
+				<span class="u-font-weight"
+					style="margin-right:10upx">{{userData.userName?userData.userName:'-'}}</span>
+<!--				<span-->
+<!--					class="u-font-xs u-font-weight">{{userData.positionalTitleName?userData.positionalTitleName:'-'}}</span>-->
+			</view>
+			<view class="message-person">
+				<view class="message-person">
+					<picker :value="index" :range-key="'regionName'" :range="userData.regionList"
+						@change="bindPickerChange">
+						<view class="picker">{{userData.regionList[index].regionName}}<u-icon name="arrow-down"></u-icon></view>
+					</picker>
+				</view>
+				<!-- <span class="u-font-weight" style="margin-right:10upx">{{userData.regionName?userData.regionName:'-'}}</span> -->
+			</view>
+		</view>
+		<view class="medicineBox" style="margin-top:15upx">
+<!--			<view class="u-font-weight" style="padding: 20upx">-->
+<!--				药品转运-->
+<!--			</view>-->
+			<u-grid :col="3" :border="false">
+				<u-grid-item @click="drugAcceptanceManagement">
+					<u-image width="100upx" height="100upx"
+						src='../../static/images/dispensingManagement.png'></u-image>
+					<view class="grid-text u-font-md u-font-weight">到货验收</view>
+				</u-grid-item>
+				<u-grid-item @click='messageCenter'>
+					<u-image width="100upx" height="100upx" src='../../static/images/message.png'></u-image>
+					<view class="grid-text u-font-md u-font-weight">消息中心</view>
+				</u-grid-item>
+				<u-grid-item @click='personCenter'>
+					<u-image width="100upx" height="100upx" src='../../static/images/people.png'></u-image>
+					<view class="grid-text u-font-md u-font-weight">个人中心</view>
+				</u-grid-item>
+			</u-grid>
+		</view>
+
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				userData: {},
+				index: 0,
+				selectedValue: ''
+			}
+		},
+		onShow() {
+			this.userData = uni.getStorageSync('memberInfo')
+			this.index = this.userData.defaultRegionIndex ? this.userData.defaultRegionIndex : 0
+			if (!this.userData.defaultRegionIndex) {
+				this.userData.defaultRegionName = this.userData.regionList[this.index].regionName
+				this.userData.defaultRegionValue = this.userData.regionList[this.index].regionValue
+				this.userData.defaultRegionIndex = this.index
+				uni.setStorageSync('memberInfo', this.userData);
+			}
+			// this.print()
+		},
+		methods: {
+			async print(){
+				console.log({ip:'192.168.137.194'})
+				await this.$printer.netSdkOpen({ip:'192.168.137.194'});
+				await this.$printer.printBlock();
+				// await this.$printer.printAddress();
+			},
+			bindPickerChange(e) {
+				this.index = e.detail.value
+				this.userData.defaultRegionName = this.userData.regionList[this.index].regionName
+				this.userData.defaultRegionValue = this.userData.regionList[this.index].regionValue
+				this.userData.defaultRegionIndex = this.index
+				uni.setStorageSync('memberInfo', this.userData);
+			},
+
+			//验收
+			drugAcceptanceManagement() {
+				uni.navigateTo({
+					url: './checkAcceptance/index'
+				});
+			},
+			//消息中心
+			messageCenter() {
+				uni.navigateTo({
+					url: './member/message'
+				});
+			},
+			//个人中心
+			personCenter() {
+				uni.navigateTo({
+					url: './member/index'
+				});
+			},
+		}
+	}
+</script>
+
+<style lang="scss" scoped>
+	.main-head {
+		// background-color: #009ced;
+		background: url('../../static/images/headTop.png') no-repeat;
+		background-size: contain;
+
+		.main-head-content {
+			width: 100%;
+			margin: 0 auto;
+			width: 100%;
+			background-repeat: no-repeat;
+			background: url(@/static/images/headTop.png) no-repeat center center;
+			background-size: 100% 100%;
+			position: fixed;
+			z-index: 20;
+			top: 0px;
+
+			.u-demo-title {
+				padding-top: 30upx;
+				color: #ffffff;
+				height: 150upx;
+				line-height: 120upx;
+				font-size: 34upx;
+
+				.name {
+					padding: 5upx;
+				}
+
+				;
+
+				.work {
+					font-size: 10upx;
+				}
+
+				;
+
+				.homePage {
+					text-align: center;
+				}
+
+				;
+
+				.personalInformation {
+					text-align: right;
+					font-size: 30upx;
+					// padding: 5upx;
+				}
+			}
+		}
+	}
+
+	.messages {
+		width: 94%;
+		margin: 10upx auto 0 auto;
+		padding: 10upx;
+		background: #deecf7;
+		color: #5bb2f7;
+		display: flex;
+		justify-content: space-between
+	}
+
+	.viewDown {
+		height: 200upx;
+	}
+
+	.container {
+		width: 94%;
+		margin: 0 auto;
+	}
+
+	.medicineBox {
+		width: 94%;
+		margin: 0 auto;
+		background-color: #fff;
+	}
+</style>

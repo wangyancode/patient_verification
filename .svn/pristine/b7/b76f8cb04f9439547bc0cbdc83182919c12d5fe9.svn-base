@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dincher.project.system.mapper.UserMapper">
+
+    <resultMap type="com.dincher.project.system.domain.vo.UserVO" id="UserVOMap">
+        <result property="userId" column="user_id" jdbcType="INTEGER"/>
+        <result property="userName" column="user_name" jdbcType="VARCHAR"/>
+        <result property="type" column="type" jdbcType="VARCHAR"/>
+        <result property="userAccount" column="user_account" jdbcType="VARCHAR"/>
+        <result property="userPassword" column="user_password" jdbcType="VARCHAR"/>
+        <result property="userSex" column="userSex" jdbcType="VARCHAR"/>
+        <result property="user_sex" column="user_sex" jdbcType="VARCHAR"/>
+        <result property="documentId" column="document_id" jdbcType="INTEGER"/>
+        <result property="userStatus" column="user_status" jdbcType="VARCHAR"/>
+        <result property="remark" column="remark" jdbcType="VARCHAR"/>
+        <result property="roleNames" column="roleNames" jdbcType="VARCHAR"/>
+        <result property="positionalTitle" column="positional_title" jdbcType="VARCHAR"/>
+        <result property="positionalTitleName" column="positionalTitleName" jdbcType="VARCHAR"/>
+        <result property="regionType" column="region_type" jdbcType="VARCHAR"/>
+        <result property="regionName" column="regionName" jdbcType="VARCHAR"/>
+        <result property="deleteFlag" column="delete_flag" jdbcType="INTEGER"/>
+        <result property="createBy" column="create_by" jdbcType="INTEGER"/>
+        <result property="createDatetime" column="create_datetime" jdbcType="TIMESTAMP"/>
+        <result property="updateBy" column="update_by" jdbcType="INTEGER"/>
+        <result property="updateDatetime" column="update_datetime" jdbcType="TIMESTAMP"/>
+        <result property="createByName" column="createByName" jdbcType="VARCHAR"/>
+        <result property="roleNames" column="roleNames" jdbcType="VARCHAR"/>
+        <result property="avatar" column="avatar" jdbcType="VARCHAR"/>
+        <collection property="regionValue" ofType="java.lang.String" column="user_id"
+                    select="selectRegions">
+        </collection>
+        <collection property="roles" ofType="com.dincher.project.system.domain.vo.UserVO" column="user_id"
+                    select="selectRoles">
+        </collection>
+        <collection property="regionList" ofType="java.util.Map" column="user_id"
+                    select="selectRegionList">
+        </collection>
+    </resultMap>
+
+    <select id="selectRegions" resultType="java.lang.String">
+        select
+            a.region_value
+        from sys_user_region a
+        <where>
+            a.delete_flag=0
+            and a.user_id = #{userId}
+        </where>
+        order by a.region_value
+    </select>
+
+    <select id="selectRegionList" resultType="java.util.Map">
+        select
+            region.region_value as regionValue,rg.dict_label as regionName
+        from sys_user a
+        left join sys_user_region region on a.user_id = region.user_id and region.delete_flag = 0
+        left join sys_dict_data rg on rg.dict_value = region.region_value and rg.dict_type = a.region_type
+        <where>
+            a.delete_flag=0
+            and a.user_id = #{userId}
+        </where>
+        order by region.region_value
+    </select>
+
+
+    <select id="selectRoles" resultType="Role">
+        select distinct r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.menu_check_strictly, r.dept_check_strictly,
+        r.status, r.delete_flag, r.create_datetime, r.remark
+        from sys_role r
+        left join sys_user_role ur on r.role_id = ur.role_id and ur.delete_flag=0
+        <where>
+            r.delete_flag=0
+            and ur.user_id = #{userId}
+        </where>
+        order by r.create_datetime,r.role_id desc
+    </select>
+
+    <select id="selectDataList" resultMap="UserVOMap">
+        select a.type,
+        a.user_id, a.user_account,a.user_sex ,a.user_name, a.user_status, a.delete_flag,a.document_id,a.remark,
+        a.positional_title,a.region_type,
+        a.create_by, a.create_datetime, a.update_by, a.update_datetime,group_concat(distinct r.role_id) as roleId,group_concat(distinct r.role_name) as roleNames,u.user_name as "createByName",
+        pt.dict_label as positionalTitleName,group_concat(DISTINCT rg.dict_label) as regionName
+        from sys_user a
+        left join sys_user_role ur on a.user_id = ur.user_id
+        left join sys_role r on ur.role_id = r.role_id
+        left join sys_user u on a.create_by = u.user_id
+        left join sys_dict_data pt on pt.dict_value = a.positional_title and pt.dict_type = 'position_title'
+        left join sys_user_region region on a.user_id = region.user_id and region.delete_flag = 0
+        left join sys_dict_data rg on rg.dict_value = region.region_value and rg.dict_type = a.region_type
+        <where>
+            a.delete_flag=0 and a.user_id != 1
+            <if test="userName != null and userName != ''">
+                and a.user_name like concat('%',#{userName},'%')
+            </if>
+            <if test="useAccount!= null and useAccount != ''">
+                and a.user_account like concat('%',#{useAccount},'%')
+            </if>
+            <if test="userStatus != null and userStatus != ''">
+                and a.user_status = #{userStatus}
+            </if>
+            <if test="beginTime != null and beginTime != null">
+                and DATE_FORMAT(a.create_time,'%Y-%m-%d') &lt; =  #{beginTime}
+            </if>
+            <if test="endTime != null and endTime != null">
+                and DATE_FORMAT(a.create_time,'%Y-%m-%d') &gt; =  #{endTime}
+            </if>
+        </where>
+        group by a.user_id,positionalTitleName
+        <if test="regionName!= null and regionName != ''">
+            having locate(#{regionName},regionName) > 0
+        </if>
+        order by a.create_datetime desc
+    </select>
+
+    <select id="getUserByUserAccount" resultMap="UserVOMap">
+        select
+        a.user_id, a.user_account,IF(a.user_sex=1,'男','女') as user_sex,a.user_password,
+        a.user_name, a.user_status,a.document_id,a.remark,
+        a.positional_title,a.region_type,
+        a.create_by, a.create_datetime, a.update_by, a.update_datetime,group_concat(distinct r.role_name) as roleNames,u.user_name as "createByName",
+        pt.dict_label as positionalTitleName,group_concat(DISTINCT rg.dict_label) as regionName
+        from sys_user a
+        left join sys_user_role ur on a.user_id = ur.user_id
+        left join sys_role r on ur.role_id = r.role_id
+        left join sys_user u on a.create_by = u.user_id
+        left join sys_dict_data pt on pt.dict_value = a.positional_title and pt.dict_type = 'position_title'
+        left join sys_user_region region on a.user_id = region.user_id and region.delete_flag = 0
+        left join sys_dict_data rg on rg.dict_value = region.region_value and rg.dict_type = a.region_type
+        <where>
+            a.delete_flag=0
+            and a.user_account = #{useAccount}
+        </where>
+        group by a.user_id,positionalTitleName
+    </select>
+
+    <select id="getPersonalInfo" resultMap="UserVOMap">
+        select
+        a.user_id,a.type, a.user_account,IF(a.user_sex=1,'男','女') as userSex,a.user_name,a.document_id,
+        doc.document_url as avatar,a.reset_password_flag,
+        a.positional_title,a.region_type,
+        a.create_datetime,group_concat(distinct r.role_name) as roleNames,
+        pt.dict_label as positionalTitleName,group_concat(DISTINCT rg.dict_label) as regionName
+        from sys_user a
+        left join sys_user_role ur on a.user_id = ur.user_id
+        left join sys_role r on ur.role_id = r.role_id
+        left join sys_document doc on a.document_id = doc.document_id
+        left join sys_dict_data pt on pt.dict_value = a.positional_title and pt.dict_type = 'position_title'
+        left join sys_user_region region on a.user_id = region.user_id and region.delete_flag = 0
+        left join sys_dict_data rg on rg.dict_value = region.region_value and rg.dict_type = a.region_type
+        <where>
+            a.delete_flag=0 and a.user_id = #{userId}
+        </where>
+        group by a.user_id,positionalTitleName
+    </select>
+
+    <select id="getUserListByQueryParam" resultType="UserVO">
+        select
+        a.user_id, a.user_account,IF(a.user_sex=1,'男','女') as userSex,a.user_name,a.document_id,
+        doc.document_url as avatar,a.reset_password_flag,
+        a.positional_title,a.region_type,
+        a.create_datetime,group_concat(distinct r.role_name) as roleNames,
+        pt.dict_label as positionalTitleName,group_concat(DISTINCT rg.dict_label) as regionName
+        from sys_user a
+        left join sys_user_role ur on a.user_id = ur.user_id
+        left join sys_role r on ur.role_id = r.role_id
+        left join sys_document doc on a.document_id = doc.document_id
+        left join sys_dict_data pt on pt.dict_value = a.positional_title and pt.dict_type = 'position_title'
+        left join sys_user_region region on a.user_id = region.user_id and region.delete_flag = 0
+        left join sys_dict_data rg on rg.dict_value = region.region_value and rg.dict_type = a.region_type
+        <where>
+            a.delete_flag=0
+            <if test="regionValue != null">
+                and region.region_value = #{regionValue}
+            </if>
+            <if test="roleKey != null and roleKey != null">
+                and r.role_key = #{roleKey}
+            </if>
+        </where>
+        group by a.user_id,positionalTitleName
+    </select>
+
+</mapper>
+
+

@@ -1,0 +1,4 @@
+export default {
+	baseURL:'http://172.168.10.59:9658',//王严
+	// baseURL: 'http://172.168.10.61:8080', //王梓宁
+}

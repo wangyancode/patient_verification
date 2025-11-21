@@ -1,0 +1,53 @@
+package com.dincher.project.scm.task;
+
+import com.dincher.project.scm.service.HisUnsynchronizedDeliveryOrderDetailsService;
+import com.dincher.project.scm.service.PatientRecordsService;
+import com.ewell.sdk.exception.SDKException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+
+/**
+ * 定时任务工具类
+ */
+@Component
+public class TaskUtils {
+
+    @Autowired
+    private PatientRecordsService patientRecordsService;
+
+    private static final Logger log = LoggerFactory.getLogger(TaskUtils.class);
+
+    @Resource
+    private HisUnsynchronizedDeliveryOrderDetailsService hisUnsynchronizedDeliveryOrderDetailsService;
+
+
+    @Scheduled(cron = "0 0/5 * * * ?")
+    public void doDrugTask() {
+        log.info("-----开始任务（同步his数据）-----");
+        hisUnsynchronizedDeliveryOrderDetailsService.synchronizedData();
+        log.info("-----结束任务（同步his数据）-----");
+    }
+
+
+    /**
+     *
+     *定时任务处理 确认失败的数据
+     * @author wzn
+     * @date 2025/06/21 14:50
+     */
+    @Scheduled(cron = "0 0/5 * * * ?")
+    public void updateStatus() {
+        try {
+            patientRecordsService.updateStatus() ;
+        } catch (SDKException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+}

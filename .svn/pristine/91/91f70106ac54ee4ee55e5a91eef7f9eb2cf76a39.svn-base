@@ -1,0 +1,224 @@
+export default [{
+		"name": "片剂",
+		"type": 1,
+		"id":1,
+		"tableData": [{
+				bedNo: 'NO0001',
+				name: '李兰',
+				children: [{
+					id: '12987110',
+					name: '地榆升白片',
+					number:2,
+					unit:'片',
+					standards: '100mg*40片',
+					area: '成都迪奥集团',
+					fix: '100mg',
+					frequency: '3次/日'
+				}, {
+					id: '12987111',
+					name: '氯化钾缓释片',
+					number:3,
+					unit:'片',
+					standards: '0.5g*48片',
+					area: '成都迪奥集团',
+					fix: '100mg',
+					frequency: '1次/日'
+				}, {
+					id: '12987112',
+					name: '消炎片',
+					number:5,
+					unit:'片',
+					standards: '100mg*20片',
+					area: '成都迪奥集团',
+					fix: '100mg',
+					frequency: '3次/日'
+				}]
+			}, {
+				bedNo: 'NO0002',
+				name: '张晶晶',
+				children: [{
+					id: '12987113',
+					name: '地榆升白片',
+					number:2,
+					unit:'片',
+					standards: '100mg*40片',
+					area: '成都迪奥集团',
+					fix: '100mg',
+					frequency: '3次/日'
+				}],
+
+			}, {
+				bedNo: 'NO0003',
+				name: '王辉',
+				children: [{
+						id: '12987117',
+						name: '氯化钾缓释片',
+						number:3,
+						unit:'片',
+						standards: '0.5g*48片',
+						area: '成都迪奥集团',
+						fix: '100mg',
+						frequency: '1次/日'
+					}, {
+						id: '12987118',
+						name: '消炎片',
+						number:3,
+						unit:'片',
+						standards: '100mg*20片',
+						area: '成都迪奥集团',
+						fix: '100mg',
+						frequency: '3次/日'
+					},
+
+				],
+
+			},
+
+		]
+	},
+	{
+		"name": "针剂",
+		"type": 2,
+		"id":2,
+		"tableData": [{
+			id: '12987210',
+			name: '氯化钾注射液',
+			number:2,
+			standards: '10ml:1g',
+			unit:'瓶',
+			area: '成都迪奥集团',
+		}, {
+			id: '12987211',
+			name: '注射用辅酶A注射液',
+			standards: '10ml:1g',
+			number:1,
+			unit:'瓶',
+			area: '成都迪奥集团',
+		}, {
+			id: '12987212',
+			name: '异烟肼注射液',
+			standards: '10ml:1g',
+			number:3,
+			unit:'瓶',
+			area: '成都迪奥集团',
+		}, {
+			id: '12987213',
+			standards: '10ml:1g',
+			number:4,
+			unit:'瓶',
+			name: '硫酸阿托品注射液',
+			area: '成都迪奥集团',
+		}]
+	},
+	{
+		"name": "贵重",
+		"type": 1,
+		"id":3,
+		"tableData": [{
+				bedNo: 'NO0004',
+				name: '李兰',
+				children: [{
+					id: '12987110',
+					number:3,
+					unit:'片',
+					name: '地榆升白片',
+					standards: '100mg*40片',
+					area: '成都迪奥集团',
+					fix: '100mg',
+					frequency: '3次/日'
+				}, {
+					id: '12987111',
+					name: '氯化钾缓释片',
+					number:2,
+					unit:'片',
+					standards: '0.5g*48片',
+					area: '成都迪奥集团',
+					fix: '100mg',
+					frequency: '1次/日'
+				}, {
+					id: '12987112',
+					name: '消炎片',
+					number:4,
+					unit:'片',
+					standards: '100mg*20片',
+					area: '成都迪奥集团',
+					fix: '100mg',
+					frequency: '3次/日'
+				}]
+			}, {
+				bedNo: 'NO0005',
+				name: '张晶晶',
+				children: [{
+					id: '12987113',
+					name: '地榆升白片',
+					number:3,
+					unit:'片',
+					standards: '100mg*40片',
+					area: '成都迪奥集团',
+					fix: '100mg',
+					frequency: '3次/日'
+				}],
+
+			}, {
+				bedNo: 'NO0006',
+				name: '王辉',
+				children: [{
+						id: '12987117',
+						name: '氯化钾缓释片',
+						number:6,
+						unit:'片',
+						standards: '0.5g*48片',
+						area: '成都迪奥集团',
+						fix: '100mg',
+						frequency: '1次/日'
+					}, {
+						id: '12987118',
+						name: '消炎片',
+						number:2,
+						unit:'片',
+						standards: '100mg*20片',
+						area: '成都迪奥集团',
+						fix: '100mg',
+						frequency: '3次/日'
+					},
+
+				],
+
+			},
+
+		]
+	},
+	{
+		"name": "胶囊",
+		"type": 2,
+		"id":4,
+		"tableData": [{
+			id: '12987310',
+			number:3,
+			unit:'粒',
+			standards: '10mg',
+			name: '双酚伪麻胶囊',
+			area: '成都迪奥集团',
+		}, {
+			id: '12987311',
+			number:1,
+			unit:'粒',
+			standards: '10mg',
+			name: '复方氨酚烷胺胶囊',
+			area: '成都迪奥集团',
+		}, {
+			id: '12987312',
+			number:2,
+			unit:'粒',
+			standards: '10mg',
+			name: '美愈伪麻胶囊',
+			area: '成都迪奥集团',
+		}]
+	},
+	{
+		"name": "精麻毒",
+		"id":5,
+		"tableData": []
+	},
+
+]

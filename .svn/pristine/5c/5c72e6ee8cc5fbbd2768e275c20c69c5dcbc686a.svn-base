@@ -1,0 +1,59 @@
+import Vue from 'vue'
+import App from './App'
+
+// 引入全局uView
+import uView from 'uview-ui';
+Vue.use(uView);
+
+
+
+//工具包
+import util from './common/utils/util';
+Vue.prototype.$util = util
+
+
+//请求脚手架
+import {request} from './common/utils/request.js'
+Vue.prototype.$request = request
+
+
+import $p from './common/public.js'
+Vue.prototype.$p = $p
+
+//打印
+import printer from './common/printer';
+Vue.prototype.$printer = printer
+
+
+
+//语言包
+// import VueI18n from './common/vuei18n/vue-i18n'
+// import LangCht from './common/vuei18n/lang/zhCHT'
+// import LangChs from './common/vuei18n/lang/zhCHS'
+// import LangEn from './common/vuei18n/lang/en'
+// Vue.use(VueI18n)
+// Vue.config.productionTip = false
+// const i18n = new VueI18n({
+// 	locale: 'cht',
+// 	messages: {
+// 		'cht': LangCht,
+// 		'chs': LangChs,
+// 		'en': LangEn,
+// 	}
+
+// })
+// const i18nlocale = uni.getStorageSync('i18nlocale');
+// if (i18nlocale) {
+// 	i18n.locale = i18nlocale;
+// }
+// Vue.prototype._i18n = i18n
+
+
+
+Vue.config.productionTip = false
+App.mpType = 'app'
+
+const app = new Vue({
+    ...App
+})
+app.$mount()

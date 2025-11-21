@@ -1,0 +1,458 @@
+package com.dincher.project.scm.service;
+
+
+import cn.hutool.core.date.DateUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.dincher.common.utils.StringUtils;
+import com.dincher.common.utils.http.HttpUtils;
+import com.dincher.framework.web.domain.ResponseEntity;
+import com.dincher.framework.web.util.ResponseUtil;
+import com.dincher.project.scm.domain.PatientRecords;
+import com.dincher.project.scm.domain.vo.ConfirmVO;
+import com.dincher.project.scm.mapper.PatientRecordsMapper;
+import com.dincher.project.system.domain.entity.DictData;
+import com.dincher.project.system.domain.entity.User;
+import com.dincher.project.system.domain.vo.UserRegionVO;
+import com.dincher.project.system.domain.vo.UserVO;
+import com.dincher.project.system.mapper.DictDataMapper;
+import com.dincher.project.system.mapper.UserRegionMapper;
+import com.dincher.project.system.service.UserService;
+import com.ewell.sdk.business.EwellServiceTool;
+import com.ewell.sdk.exception.SDKException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+
+@Slf4j
+@Service
+@Transactional
+public class PatientRecordsService extends BaseService<PatientRecords> {
+
+    @Autowired
+    private PatientRecordsMapper patientRecordsMapper;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private UserRegionMapper userRegionMapper;
+
+    @Autowired
+    private DictDataMapper dictDataMapper;
+
+
+    //分页查询
+    public Page<PatientRecords> selectPageList(PatientRecords patientRecords) {
+        Page page = new Page(patientRecords.getPageNo(), patientRecords.getPageSize());
+
+        QueryWrapper<PatientRecords> queryWrapper = new QueryWrapper<>();
+
+        //类型 1管理员 2普通技师 3科主任
+        //权限 普通技师只能看自己的  科主任可以看本科室的  管理员可以看所有
+        UserVO userVO = userService.getPersonalInfo();
+        if (2 == userVO.getType()) {
+            queryWrapper.eq("pat_verify_name", userVO.getUserName());
+        } else if (3 == userVO.getType()) {
+            QueryWrapper<UserRegionVO> queryWrapper2 = new QueryWrapper<>();
+            queryWrapper2.eq("userId", userVO.getUserId());
+            queryWrapper2.eq("deleteFlag", "0");
+            List<UserRegionVO> userRegionVOList = userRegionMapper.selectList(queryWrapper2);
+            List<String> stringList = userRegionVOList.stream()
+                    .map(UserRegionVO::getRegionValue)
+                    .collect(Collectors.toList());
+            queryWrapper.in("ckdpt_code", stringList);
+        }
+
+        if (StringUtils.isNotEmpty(patientRecords.getPat_verify_name())) {
+            queryWrapper.like("pat_verify_name", patientRecords.getPat_verify_name());
+        }
+
+        if (StringUtils.isNotEmpty(patientRecords.getPersonName())) {
+            queryWrapper.like("personName", patientRecords.getPersonName());
+        }
+
+        if (StringUtils.isNotEmpty(patientRecords.getNumber())) {
+            queryWrapper.eq("number", patientRecords.getNumber());
+        }
+
+        if (StringUtils.isNotEmpty(patientRecords.getPat_verify_code())) {
+            queryWrapper.eq("pat_verify_code", patientRecords.getPat_verify_code());
+        }
+
+        if (StringUtils.isNotEmpty(patientRecords.getRpc_code())) {
+            queryWrapper.like("rpc_code", patientRecords.getRpc_code());
+        }
+
+        if (StringUtils.isNotEmpty(patientRecords.getProj_name())) {
+            queryWrapper.like("proj_name", patientRecords.getProj_name());
+        }
+
+        if (StringUtils.isNotEmpty(patientRecords.getType())) {
+            queryWrapper.eq("type", patientRecords.getType());
+        }
+
+        if (StringUtils.isNotEmpty(patientRecords.getCkpt_name())) {
+            queryWrapper.like("ckpt_name", patientRecords.getCkpt_name());
+        }
+
+
+        //核对时间
+        if (StringUtils.isNotEmpty(patientRecords.getStartTime())) {
+            queryWrapper.ge("DATE_FORMAT(pat_verify_time, '%Y-%m-%d')", patientRecords.getStartTime());
+        }
+        //核对时间
+        if (StringUtils.isNotEmpty(patientRecords.getEndTime())) {
+            queryWrapper.le("DATE_FORMAT(pat_verify_time, '%Y-%m-%d')", patientRecords.getEndTime());
+        }
+        return patientRecordsMapper.selectPage(page, queryWrapper);
+    }
+
+
+    /**
+     * 调用第三方查询接口
+     *
+     * @author wzn
+     * @date 2025/06/21 10:45
+     */
+    public List<Map<String, Object>> encapsulateData(String bar_code, String ckdpt_code) {
+
+        if(1 ==1){
+            List<Map<String, Object>> mapList = new ArrayList<>();
+
+            List<PatientRecords> list1 = new ArrayList<>();
+            PatientRecords patientRecords = new PatientRecords();
+            patientRecords.setRpt_no("110");
+            PatientRecords patientRecords3 = new PatientRecords();
+            patientRecords3.setRpt_no("130");
+            list1.add(patientRecords);
+            list1.add(patientRecords3);
+
+
+            for(PatientRecords pr:list1){
+                QueryWrapper<PatientRecords> qw = new QueryWrapper<>();
+                qw.eq("rpt_no",pr.getRpt_no() ) ;
+                qw.eq("isDel","0" ) ;
+                PatientRecords records = patientRecordsMapper.selectOne(qw);
+                if(null == records){
+                    pr.setAgainConfirm("0");
+                }else {
+                    pr.setAgainConfirm("1");
+                }
+            }
+
+
+
+
+
+            List<PatientRecords> list2 = new ArrayList<>();
+            PatientRecords patientRecords2 = new PatientRecords();
+            patientRecords2.setRpt_no("120");
+
+            PatientRecords patientRecords4 = new PatientRecords();
+            patientRecords4.setRpt_no("120");
+            list2.add(patientRecords2);
+            list2.add(patientRecords4);
+
+            for(PatientRecords pr:list2){
+                QueryWrapper<PatientRecords> qw = new QueryWrapper<>();
+                qw.eq("rpt_no",pr.getRpt_no() ) ;
+                qw.eq("isDel","0" ) ;
+                PatientRecords records = patientRecordsMapper.selectOne(qw);
+                if(null == records){
+                    pr.setAgainConfirm("0");
+                }else {
+                    pr.setAgainConfirm("1");
+                }
+            }
+
+            Map<String, Object> map1 = new HashMap<>();
+            map1.put("type", "1");
+            map1.put("name", "张三");
+            map1.put("sex", "男");
+            map1.put("list", list1);
+            mapList.add(map1);
+
+            Map<String, Object> map2 = new HashMap<>();
+            map2.put("type", "3");
+            map2.put("name", "张三");
+            map2.put("sex", "男");
+            map2.put("list", list2);
+            mapList.add(map2);
+
+            return mapList ;
+        }
+
+        String res = HttpUtils.sendGetCookie(" https://credit.gamesafe.qq.com/cgi-bin/qq/proxy/punish_query", "query_type=3&limit=10", "");
+        JSONObject jsonObject = JSON.parseObject(res);
+        String name = jsonObject.getString("name");
+        //1、男，2、女
+        String sex = jsonObject.getString("sex");
+        if ("1".equals(sex)) {
+            sex = "男";
+        } else if ("2".equals(sex)) {
+            sex = "女";
+        }
+        String age = jsonObject.getString("age");
+
+        JSONArray details = (JSONArray) jsonObject.get("details");
+        if (null == details) {
+            return Collections.emptyList();
+        }
+        List<PatientRecords> patientRecordsList = (List<PatientRecords>) JSONArray.parseArray(details.toString(), PatientRecords.class);
+
+        //类型  1门诊
+        List<PatientRecords> list1 = new ArrayList<>();
+        // 2急诊
+        List<PatientRecords> list2 = new ArrayList<>();
+        //3住院
+        List<PatientRecords> list3 = new ArrayList<>();
+        //4体检
+        List<PatientRecords> list4 = new ArrayList<>();
+        //todo 假装获取到数据
+        //封装前端数据
+        if (!CollectionUtils.isEmpty(patientRecordsList)) {
+            for (PatientRecords pr : patientRecordsList) {
+
+                QueryWrapper<PatientRecords> qw = new QueryWrapper<>();
+                qw.eq("rpt_no",pr.getRpt_no() ) ;
+                qw.eq("isDel","0" ) ;
+                PatientRecords records = patientRecordsMapper.selectOne(qw);
+                if(null == records){
+                    pr.setAgainConfirm("0");
+                }else {
+                    pr.setAgainConfirm("1");
+                }
+
+                pr.setBar_code(bar_code);
+                pr.setPersonName(name);
+                pr.setSex(sex);
+                pr.setAge(age);
+                pr.setType(pr.getOp_em_mark());
+                pr.setNumber(pr.getOp_em_no());
+                if ("1".equals(pr.getType())) {
+                    list1.add(pr);
+                } else if ("2".equals(pr.getType())) {
+                    list2.add(pr);
+                } else if ("3".equals(pr.getType())) {
+                    list3.add(pr);
+                } else if ("4".equals(pr.getType())) {
+                    list4.add(pr);
+                }
+            }
+
+        }
+
+        //封装数据
+        List<Map<String, Object>> mapList = new ArrayList<>();
+        Map<String, Object> map1 = new HashMap<>();
+        map1.put("type", "1");
+        map1.put("name", name);
+        map1.put("sex", sex);
+        map1.put("list", list1);
+        mapList.add(map1);
+
+        Map<String, Object> map2 = new HashMap<>();
+        map2.put("type", "2");
+        map2.put("name", name);
+        map2.put("sex", sex);
+        map2.put("list", list2);
+        mapList.add(map2);
+
+        Map<String, Object> map3 = new HashMap<>();
+        map3.put("type", "3");
+        map3.put("name", name);
+        map3.put("sex", sex);
+        map3.put("list", map3);
+        mapList.add(map3);
+
+        Map<String, Object> map4 = new HashMap<>();
+        map4.put("type", "4");
+        map4.put("name", name);
+        map4.put("sex", sex);
+        map4.put("list", map4);
+        mapList.add(map4);
+        return mapList;
+    }
+
+
+    /**
+     * 确认/再次确认按钮
+     *
+     * @author wzn
+     * @date 2025/06/21 11:40
+     */
+    public ResponseEntity confirm(ConfirmVO confirmVO) throws SDKException {
+
+
+
+        User user = userService.getPersonalInfo();
+        for (PatientRecords pr : confirmVO.getPatientRecordsList()) {
+
+
+
+            if (!confirmVO.getCode().equals(pr.getRpc_code())) {
+                return ResponseUtil.error("患者身份核对失败,您所在科室与检查科室不一致");
+            }
+
+            if ("3".equals(pr.getType())) {
+                if (!confirmVO.getWristbandCode().equals(pr.getNumber())) {
+                    return ResponseUtil.error("患者身份核对失败,申请单与患者信息不一致，请重新扫描患者腕带");
+                }
+            }
+
+        }
+
+        for (PatientRecords pr : confirmVO.getPatientRecordsList()) {
+            //再次确认
+            QueryWrapper<PatientRecords> qw = new QueryWrapper<>();
+            qw.eq("rpt_no",pr.getRpt_no() ) ;
+            qw.eq("isDel","0" ) ;
+            PatientRecords records = patientRecordsMapper.selectOne(qw);
+
+
+            if (null == records) {
+                //新增记录
+                pr.setCreateUser(user.getUserId() + "");
+                pr.setCreateTime(new Date());
+                pr.setIsDel(0);
+
+                pr.setPat_verify_dept_code(confirmVO.getCode());
+
+                QueryWrapper<DictData> queryWrapper2 = new QueryWrapper<>();
+                queryWrapper2.eq("status", "0");
+                queryWrapper2.eq("delete_flag", "0");
+                queryWrapper2.eq("dict_type", "user_dept");
+                queryWrapper2.eq("dict_value", confirmVO.getCode());
+                DictData dictData = dictDataMapper.selectOne(queryWrapper2);
+
+                if (null != dictData) {
+                    pr.setPat_verify_dept_name(dictData.getDictLabel());
+                }
+
+                pr.setPat_verify_code(user.getUserAccount());
+                pr.setPat_verify_name(user.getUserName());
+                pr.setPat_verify_time(new Date());
+                patientRecordsMapper.insert(pr);
+            } else {
+                //再次确认  更新核实时间
+                records.setPat_verify_time(new Date());
+                patientRecordsMapper.updateById(records);
+            }
+
+
+            //创建连接对象
+            EwellServiceTool ewellServiceTool = new EwellServiceTool();
+
+            //获取连接
+            String cid = ewellServiceTool.connect("队列管理器名称");
+
+            //调用第三方接口确认
+//            this.putMsg() ;
+            try {
+
+                if (1 == 1) {
+                    //todo  返回成功 更改状态
+                    QueryWrapper<PatientRecords> queryWrapper = new QueryWrapper<>();
+                    queryWrapper.eq("rpt_no", pr.getRpt_no());
+                    PatientRecords patientRecords1 = patientRecordsMapper.selectOne(queryWrapper);
+                    patientRecords1.setStatus("1");
+                    patientRecordsMapper.updateById(patientRecords1);
+                }
+            } catch (Exception e) {
+
+            }
+
+
+        }
+
+        return ResponseUtil.success("患者信息核对成功，后台会持续确认，请您继续操作");
+    }
+
+
+    /**
+     * @author wzn
+     * @date 2025/06/21 14:50
+     */
+    public void updateStatus() {
+        QueryWrapper<PatientRecords> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("isDel", "0");
+        queryWrapper.ne("status", "1");
+        List<PatientRecords> patientRecordsList = patientRecordsMapper.selectList(queryWrapper);
+        if (!CollectionUtils.isEmpty(patientRecordsList)) {
+            for (PatientRecords pr : patientRecordsList) {
+
+                try {
+                    //todo  调用第三方确认接口
+
+                } catch (Exception e) {
+                }
+
+
+                //成功之后修改状态
+                pr.setStatus("1");
+                patientRecordsMapper.updateById(pr);
+            }
+
+
+        }
+    }
+
+
+
+
+
+    public String putMsg(String msgbody,EwellServiceTool ewellServiceTool){
+
+        //放入消息
+        try {
+            return ewellServiceTool.putMsg("数据通道", msgbody);
+        } catch (SDKException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public String splicingBody(PatientRecords records) {
+        String body = "<ESBEntry>\n" +
+                "   <AccessControl>\n" +
+                "      <UserName>ZNZY</UserName>\n" +
+                "      <Password>ZNZY</Password>\n" +
+                "      <Fid>PS04002</Fid>\n" +
+                "      <OrderNo>PS04002S01001</OrderNo>\n" +
+                "      <SysFlag>1</SysFlag>\n" +
+                "   </AccessControl>\n" +
+                "   <MessageHeader>\n" +
+                "      <Fid>PS04002</Fid>\n" +
+                "      <OrderNo>PS04002S01001</OrderNo>\n" +
+                "      <SourceSysCode>S84</SourceSysCode>\n" +
+                "      <TargetSysCode>S00</TargetSysCode>\n" +
+                "      <HospCode>GH01</HospCode>\n" +
+                "      <ReturnFlag>0</ReturnFlag>\n" +
+                "      <MsgDate>"+ DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss") +"</MsgDate>\n" +
+                "   </MessageHeader>\n" +
+                "   <MsgInfo>\n" +
+                "      <Msg id=\"1\" lastUpdate =\""+DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss")+"\" action=\"insert\">\n" +
+                "        <RPT_NO>"+records.getRpt_no()+"</RPT_NO>\n" +
+                "        <PAT_VERIFY_DEPT_CODE>"+records.getPat_verify_dept_code()+"</PAT_VERIFY_DEPT_CODE>\n" +
+                "        <PAT_VERIFY_DEPT_NAME>"+records.getPat_verify_dept_name()+"</PAT_VERIFY_DEPT_NAME>\n" +
+                "        <PAT_VERIFY_CODE>"+records.getPat_verify_code()+"</PAT_VERIFY_CODE>\n" +
+                "        <PAT_VERIFY_NAME>"+records.getPat_verify_name()+"</PAT_VERIFY_NAME>\n" +
+                "        <PAT_VERIFY_TIME>"+records.getPat_verify_time()+"</PAT_VERIFY_TIME>\n" +
+                "      </Msg>\n" +
+                "   </MsgInfo>\n" +
+                "</ESBEntry>" ;
+        return body ;
+    }
+
+
+}

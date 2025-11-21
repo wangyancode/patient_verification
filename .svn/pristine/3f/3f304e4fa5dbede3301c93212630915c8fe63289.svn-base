@@ -1,0 +1,267 @@
+<template>
+	<view>
+		<u-popup mode="bottom" v-model="show" border-radius="20" ref="uPopup">
+			<u-navbar :is-back="false" title="">
+				<view class="slot-wrap">
+					<view class="titleNabar">
+						<view class="" @click="close">
+							取消
+						</view>
+						<view class="">
+							选择配送人员
+						</view>
+						<view class="" @click="submit">
+							完成
+						</view>
+					</view>
+				</view>
+			</u-navbar>
+			<view class="content">
+				<view class="address-book-container">
+					<scroll-view class="scroll-container" scroll-y="true" :scroll-into-view="toView" id="demo"
+						scroll-with-animation="true">
+						<view class="letterAll" v-for="item in list" :key="item.firstLetter" :id="item.firstLetter"
+							ref="item.firstLetter" :ref="item.firstLetter">
+							<view class="letter">{{ item.firstLetter }}</view>
+							<view class="letter-person" v-for="i in item.deliveryPersonVOList" @click="toDetail(i)">
+								<u-radio-group v-model="radioGroupValue" placement="column" @change="groupChange">
+									<u-radio :customStyle="{marginBottom: '8px'}" :name="i.deliveryPersonId"
+										@change="radioChange">{{i.deliveryPersonName}}
+									</u-radio>
+								</u-radio-group>
+							</view>
+						</view>
+					</scroll-view>
+
+					<!-- 右侧字母导航条 -->
+					<view class="letter-nav">
+						<view class="item" v-for="(item, index) in indexList" :key="index" @click="toSelectIndex(item)">
+							{{ item }}
+						</view>
+					</view>
+				</view>
+			</view>
+		</u-popup>
+		<u-modal ref="uModal" v-model="allChecksShow" title="配送确认" :show-cancel-button="true" :show-title="true"
+			:async-close="false" @confirm="checkConfirm" :content="'确认该药箱由'+deliveryPersonName+'配送员进行配送'">
+		</u-modal>
+	</view>
+
+</template>
+
+<script>
+	export default {
+		props: {
+			dispensingOrderIds: {}
+		},
+		data() {
+			return {
+				// deliveryPersonId:'',
+				deliveryPersonName: '',
+				allChecksShow: false,
+				radioGroupValue: '',
+				scrollTops: 0,
+				list: [],
+				Qss: 'xxx',
+				show: false,
+				listTop: 0,
+				indexList: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
+					'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+				],
+				toView: '',
+			}
+		},
+		watch: {
+
+		},
+		onLoad() {
+
+		},
+
+		created() {
+			// this.getData()
+		},
+		mounted() {},
+		methods: {
+			getData() {
+				var that = this
+				this.$request
+					.post('/distributionManagement/queryDeliveryPersonnel', {})
+					.then(res => {
+						if (res.code == 200) {
+							that.list = res.data
+							// that.total = res.total
+						}
+					})
+					.catch(err => {});
+			},
+			groupChange(e) {
+
+			},
+			toDetail(e) {
+				this.radioGroupValue = e.deliveryPersonId
+				this.deliveryPersonName = e.deliveryPersonName
+			},
+			radioChange(e) {
+
+			},
+			isShow() {
+				this.radioGroupValue = ''
+				this.getData()
+				this.show = true
+			},
+			close() {
+				this.$refs.uPopup.close()
+			},
+			submit() {
+				console.log(this.radioGroupValue)
+				if (this.radioGroupValue == '') {
+					uni.showToast({
+						title: '请先选择配送人员',
+						duration: 2000,
+						icon:'none'
+					});
+				} else {
+					this.$refs.uPopup.close()
+					this.allChecksShow = true
+				}
+			},
+			checkConfirm() {
+				var that = this;
+				var obj = {
+					deliveryPersonId: this.radioGroupValue,
+					dispensingOrderIds: this.dispensingOrderIds
+				}
+				this.$request
+					.post('/distributionManagement/deliveryBinder', obj)
+					.then(res => {
+						console.log(res)
+						if (res.code == 200) {
+							uni.showToast({
+								title: '配送成功',
+								duration: 1000
+							});
+							this.$emit('reset')
+						}
+					})
+					.catch(err => {});
+			},
+			toSelectIndex(item) {
+				this.toView = item
+			}
+			//
+			// back() {
+			// 	uni.navigateBack({
+			// 		delta: 1
+			// 	});
+			// },
+
+		},
+	}
+</script>
+
+<style>
+	.img-sm {
+		width: 20px;
+		height: 20px;
+	}
+
+	.v-nav2 {
+		display: flex;
+		justify-content: space-between;
+		padding: 5%;
+		background-color: #d4e4ff;
+		position: fixed;
+		width: 90%;
+		top: 0;
+		z-index: 1;
+
+	}
+
+	.v-nav2-1 {
+		display: flex;
+	}
+
+	.address-book-container {
+		/* margin-top: 18%; */
+		margin-left: 2%;
+	}
+
+	.contact-img {
+		width: 20px;
+		height: 20px;
+	}
+
+	.scroll-container {
+		height: 80vh;
+	}
+
+	.letter-nav {
+		height: 55vh;
+		font-size: 28upx;
+		position: fixed;
+		top: 10vh;
+		right: 35rpx;
+		text-align: center;
+	}
+
+	.contact-container {
+		display: flex;
+		align-items: center;
+		margin: 2%;
+	}
+
+	.contact-detail-container {
+		margin-left: 2%;
+
+	}
+
+	.titleNabar {
+		width: 100vw;
+		display: flex;
+		justify-content: space-between;
+		padding: 20upx;
+	}
+
+	.letter1 {
+		width: 100vw;
+		position: fixed;
+		background: #ededed;
+	}
+
+	.letter {
+		background: #ededed;
+	}
+
+	.letter-person {
+		height: 100upx;
+		line-height: 100upx;
+
+	}
+
+
+	.topfixed-active {
+		width: 100%;
+		padding: 0 25upx;
+		position: fixed;
+		top: var(--window-top-100);
+		/* 顶部导航栏位置 */
+		/* top: calc(9.3vh + var(--window-top)); */
+		/* 顶部导航栏还有其他盒子 使用  */
+		left: 0;
+		background: #fff;
+		z-index: 99889;
+		box-sizing: border-box;
+	}
+
+	.tagTop {
+		/* 	height: 80upx;
+		line-height: 80upx; */
+		background-color: #eeeeee;
+		text-align: center;
+	}
+
+	.paTop80 {
+		padding-top: 80upx;
+	}
+</style>

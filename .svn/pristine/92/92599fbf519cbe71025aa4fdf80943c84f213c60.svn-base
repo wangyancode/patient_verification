@@ -1,0 +1,39 @@
+package com.dincher.project.scm.domain.entity;
+
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.dincher.framework.web.domain.CommonEntity;
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
+/**
+ * app版本号管理(its_app_versions)数据库映射实体类
+ *
+ * @author yc
+ * @date 2023-12-21 13:32:31
+ */
+@Data
+public class AppVersions extends CommonEntity{ 
+
+    @TableId(type = IdType.AUTO)
+    @TableField("app_versions_id")
+    @ApiModelProperty(value = "配药方案id")
+    private Integer app_versions_id;
+    
+    @TableField("document_id")
+    @ApiModelProperty(value = "文件主键id")
+    private Integer documentId;
+    
+    @TableField("versions_no")
+    @ApiModelProperty(value = "版本号")
+    private String versionsNo;
+    
+    @TableField(value = "delete_flag",fill = FieldFill.INSERT)
+    @ApiModelProperty(value = "是否删除,0-未删除，1-已删除")
+    private Integer deleteFlag;
+    
+    
+}
+

@@ -1,0 +1,9 @@
+{
+    "id": "tanluzhe-clock",
+    "name": "计时器插件",
+    "version": "0.0.2",
+    "description": "计时器功能",
+    "keywords": [
+        "计时器"
+    ]
+}

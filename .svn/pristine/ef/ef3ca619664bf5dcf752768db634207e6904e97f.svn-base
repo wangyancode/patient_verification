@@ -1,0 +1,420 @@
+<template>
+	<view class="login">
+		<image src="../../static/images/login-bg.png" mode="aspectFill" style="width: 100%;"></image>
+		<view class="" style="text-align: center;width: 100%;margin: 0 auto;position: absolute;top: 110rpx;">
+			<image src="../../static/images/login-logo.png" mode="aspectFill" style="width: 160rpx;height: 160rpx;">
+			</image>
+			<view style="font-size: 42rpx;color: #fff;letter-spacing:4rpx">
+				药品供应链统一验收系统
+			</view>
+		</view>
+		<!-- 	<image src="../../static/images/login-logo.png" mode="aspectFill"
+				style="width: 140rpx;height: 140rpx;position: absolute;top: 180rpx;left: 100rpx;"></image>
+		<view style="position: absolute;top: 180rpx;left: 270rpx;font-size: 44rpx;color: #fff;letter-spacing:4rpx">
+			欢迎登录
+		</view>
+		<view style="position: absolute;top: 260rpx;left: 270rpx;font-size: 44rpx;color: #fff;letter-spacing:4rpx">
+			智能转运系统
+		</view> -->
+		<view class="u-demo-area">
+			<view class="container">
+				<u-form :model="loginForm" :rules="loginRules" ref="uForm" :errorType="errorType">
+					<u-form-item prop="userAccount" label-width="0" :borderBottom="false"
+						style="border-radius: 50px;background-color:#eee;padding: 20rpx 40rpx;">
+						<u-input :border="false" class="u-input" :placeholderStyle="'fontSize:30rpx'"
+							placeholder="请输入账号" v-model="loginForm.userAccount" type="text"
+							@confirm="formSubmit"></u-input>
+					</u-form-item>
+					<u-form-item prop="password" label-width="0" :borderBottom="false"
+						style="border-radius: 50px;background-color:#eee;padding: 20rpx 40rpx;margin-top: 30rpx;">
+						<u-input :password-icon="true" :placeholderStyle="'fontSize:30rpx'" :border="false"
+							type="password" v-model="loginForm.password" placeholder="请输入密码"
+							@confirm="formSubmit"></u-input>
+					</u-form-item>
+				</u-form>
+				<u-button @click="formSubmit" data-name="reg" type="primary" class="login-b" :shape="'circle'"
+					@keyup.enter="formSubmit">立即登录</u-button>
+				<!-- <u-button v-if="!islogin" data-name="reg" type="primary" class="login-b" :shape="'circle'">立即登录</u-button> -->
+				<!-- <view class="u-margin-top-40 u-text-right " @tap="$util.navigateTo('/pages/user/forget')">忘记密码？</view> -->
+			</view>
+
+
+		</view>
+<!--		<view class="login_two">-->
+<!--			<image src="../../static/images/login_two.png" mode="aspectFill" style="width: 100rpx;height: 100rpx;"-->
+<!--				@click="showPopup=true">-->
+<!--			</image>-->
+<!--		</view>-->
+		<u-modal @cancel='cancelDalog' :show-cancel-button='true' v-model="isUpShow" content="当前版本过低,请及时更新" @confirm="upConfirm"></u-modal>
+
+		<u-popup border-radius="14" v-model="showPopup" mode="bottom" length="50%" :mask="true" :closeable="true"
+			:close-icon-pos="'top-right'">
+			<view class="">
+				<view class="popup-header">人员登录</view>
+				<view class="popup-content">
+					<u-form :model="loginForm" >
+						<u-form-item prop="reCheckerAccount" label-width="0" :borderBottom="false"
+							style="border-radius: 50px;background-color:#eee;padding: 20rpx 40rpx;">
+							<u-input :border="false" class="u-input" :placeholderStyle="'fontSize:30rpx'"
+								placeholder="请输入账号" v-model="loginForm.reCheckerAccount" type="text"></u-input>
+						</u-form-item>
+						<u-form-item prop="reCheckerPassword" label-width="0" :borderBottom="false"
+							style="border-radius: 50px;background-color:#eee;padding: 20rpx 40rpx;margin-top: 30rpx;">
+							<u-input :password-icon="true" :placeholderStyle="'fontSize:30rpx'" :border="false"
+								type="password" v-model="loginForm.reCheckerPassword" placeholder="请输入密码"></u-input>
+						</u-form-item>
+					</u-form>
+					<u-button @click="handleCheck" data-name="reg" type="primary" class="login-re" :shape="'circle'">确
+						认</u-button>
+				</view>
+
+			</view>
+		</u-popup>
+	</view>
+</template>
+<script>
+	export default {
+		data() {
+			return {
+				show: false,
+				mode: 'selector',
+				show_default: 1,
+				selectd: 0,
+				account: '',
+				password: '',
+				islogin: true,
+				loginForm: {
+					userAccount: "",
+					password: "",
+					reCheckerAccount: '',
+					reCheckerPassword: '',
+				},
+				loginRules: {
+					userAccount: [{
+						required: true,
+						trigger: "blur",
+						message: "请输入账号"
+					}],
+					password: [{
+						required: true,
+						trigger: "blur",
+						message: "请输入密码"
+					}],
+				},
+
+				errorType: ['toast'],
+				memberInfo: {},
+				roles: [],
+				showPopup: false,
+				isUpShow: false,
+				isUp: true,
+				versionData:{} ,
+
+			};
+		},
+
+		onLoad() {
+			this.memberinfo = uni.getStorageSync('memberInfo')
+			if (this.memberinfo) {
+				this.loginForm.userAccount = this.memberinfo.userAccount
+			}
+		},
+		onReady() {
+			this.$refs.uForm.setRules(this.loginRules);
+			// this.formSubmit();
+		},
+		methods: {
+			formSubmit() {
+				var that = this;
+				that.$refs.uForm.validate(valid => {
+					if (valid) {
+						that.islogin = false;
+						that.clearToken()
+						that.$request
+							.post(that.$util.url('/login'), that.loginForm)
+							.then(res => {
+								uni.setStorageSync('loginToken', res.data.token);
+								that.$request.setConfig(config => {
+									/* 设置全局配置 */
+									config.header = {
+										...config.header,
+										Authorization: 'Bearer ' + res.data.token,
+									};
+									return config;
+								});
+								that.updates()
+							})
+							.catch(err => {});
+
+					}
+				});
+
+
+			},
+
+			handleCheck() {
+				var that = this;
+				if(!this.loginForm.reCheckerAccount){
+					uni.showToast({
+						title: '请输入账号',
+						icon:'none'
+					});
+					return
+				}
+				if(!this.loginForm.reCheckerPassword){
+					uni.showToast({
+						title: '请输入密码',
+						icon:'none'
+					});
+					return
+				}
+				that.showPopup = false
+			},
+			getMemberInfo() {
+				var that = this;
+				this.$request
+					.get(this.$util.url('/getInfo'))
+					.then(res => {
+						console.log('memberInfo', res.data.user);
+						that.memberInfo = res.data.user
+						that.roles = res.data.rolePermissions
+						uni.setStorageSync('memberInfo', res.data.user);
+						uni.setStorageSync('roles', res.data.rolePermissions);
+						// if (res.data.rolePermissions && (res.data.rolePermissions[0] == 'sys_nurse' || res.data
+						// 		.rolePermissions[0] == 'sys_delivery' || res.data.rolePermissions[0] == 'sys_pharmacy'
+						// 	)) {
+							uni.showToast({
+								title: '登录成功',
+								success: function(res2) {
+									that.islogin = true;
+									setTimeout(function() {
+										//判断用户角色跳转对应页面
+										// if (res.data.rolePermissions[0] == 'sys_nurse') { //护士端
+											uni.reLaunch({
+												url: '/pages/workPages/index'
+											})
+										// }
+										// if (res.data.rolePermissions[0] == 'sys_delivery') { //配送端
+										// 	uni.reLaunch({
+										// 		url: '/pages/delivery/index'
+										// 	})
+										// }
+										// if (res.data.rolePermissions[0] == 'sys_pharmacy') { //药房端
+										// 	uni.reLaunch({
+										// 		url: '/pages/dispensing/index'
+										// 	})
+										// }
+
+									}, 1500);
+								}
+							});
+						// } else {
+						// 	uni.showToast({
+						// 		title: '该用户无此权限，无法登陆',
+						// 		icon: 'none',
+						// 	});
+						// 	that.clearToken()
+						// }
+
+					})
+					.catch(err => {});
+			},
+
+			clearToken() {
+				var that = this
+				uni.clearStorageSync()
+				that.$request.setConfig(config => {
+					/* 设置全局配置 */
+					config.header = {
+						...config.header,
+						Authorization: '',
+					};
+					return config;
+				});
+			},
+			cancelDalog() {
+				uni.showToast({
+					title: '已取消更新',
+					duration: 2000,
+					icon: 'none',
+				});
+				this.getMemberInfo()
+			},
+			updates() {
+				var that = this
+				let system = uni.getSystemInfoSync();
+
+				this.$request.get('/appVersions/checkVersions/' + system.appVersion).then(res => {
+					if (res.data == null) {
+						that.isUp = true
+						// that.versionsNo = '最新版本' + system.appVersion
+					} else {
+						that.isUp = false
+						that.versionData = res.data
+						// that.versionsNo = '当前版本过低（'+system.appVersion + ')'+'，请及时更新'
+					}
+					if (!this.isUp) {
+						setTimeout(() => {
+							this.isUpShow = true
+						}, 1000)
+					} else {
+						this.getMemberInfo()
+					}
+				})
+			},
+			upConfirm() {
+				this.downloadFile(this.versionData.documentUrl)
+			},
+			async downloadFile(url) {
+				uni.showLoading({
+					title: "下载中"
+				});
+				uni.downloadFile({
+					url: url, //仅为示例，并非真实的资源
+					success: (res) => {
+						console.log(res, "下载成功");
+						if (res.statusCode === 200) {
+							console.log("下载成功");
+							uni.hideLoading();
+							uni.showToast({
+								title: "下载成功",
+								icon: "success"
+							});
+							uni.saveFile({
+								tempFilePath: res.tempFilePath,
+								success: function(res) {
+									uni.openDocument({
+										filePath: res.savedFilePath,
+										success: function(
+												res) {
+											console.log(
+													res,
+													"打开安装包"
+											);
+										},
+									});
+								},
+								fail: (err) => {
+									console.log(err, "打开安装包-失败");
+								},
+							});
+						}
+					},
+					fail: (err) => {
+						console.log(err, "下载失败");
+						uni.hideLoading();
+						uni.showToast({
+							title: "下载失败,请检查网络",
+							icon: "none",
+							duration: 1500,
+						});
+					},
+				});
+			},
+		}
+	};
+</script>
+
+<style lang="scss" scoped>
+	.lang-main {
+		position: absolute;
+		right: 40upx;
+		bottom: 40upx;
+		color: #ffffff;
+		border: 1px solid #7a73a6;
+		padding: 14upx 30upx;
+		border-radius: 8upx;
+	}
+
+	.lang-select {
+		margin-left: 10upx;
+	}
+
+	.u-demo-result-line {
+		color: #ffffff;
+		font-size: 24upx;
+	}
+
+	.u-demo-area {
+		width: 94%;
+		margin: 0 auto;
+	}
+
+	.container {
+		text-align: left;
+		font-size: 32rpx;
+		color: $u-content-color;
+		margin: 60upx 6% 60upx;
+
+		.container-title {
+			font-weight: bold;
+			color: #000000;
+			font-size: 46upx;
+		}
+
+		.container-input {
+
+			// border-bottom: 1px solid #ededed;
+			.u-input {
+				margin-left: 40upx;
+				height: 30px;
+				font-size: 32upx;
+				flex: 1;
+				height: 100upx;
+				padding-left: 20upx;
+			}
+
+			.picker {
+				width: 100%;
+				text-align: left;
+				height: 100upx;
+				line-height: 100upx;
+
+				.picker-arrow {
+					margin-left: 4upx;
+					text-align: right;
+				}
+			}
+		}
+	}
+
+	.login-b {
+		margin-top: 100upx;
+		height: 100upx;
+		width: 100%;
+	}
+
+	.login-re {
+		margin-top: 80upx;
+		height: 100upx;
+		width: 100%;
+	}
+
+	.reg-style {
+		border: 1px solid #0a84ce;
+		color: #0a84ce;
+		margin-bottom: 80upx;
+	}
+
+	.login_two {
+		position: fixed;
+		bottom: 100upx;
+		text-align: center;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		width: 100%;
+	}
+
+	.popup-header {
+		width: 100%;
+		height: 100upx;
+		background-color: #f7f7f9;
+		text-align: center;
+		line-height: 100upx;
+	}
+
+	.popup-content {
+		padding: 70upx 8%;
+	}
+</style>

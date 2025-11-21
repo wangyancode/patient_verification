@@ -1,0 +1,141 @@
+package com.dincher.project.scm.domain;
+
+import com.baomidou.mybatisplus.annotation.*;
+import com.dincher.framework.web.domain.CommonEntity;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
+import org.springframework.data.annotation.Transient;
+
+import java.util.Date;
+
+/**
+ * 患者身份核对记录表
+ */
+@Data
+@TableName("patient_records")
+public class PatientRecords {
+
+
+    private Integer Id;
+    //申请单号 唯一 第三方主键id
+    private String  rpt_no;
+    //条形码
+    private String bar_code;
+
+    //门诊/急诊/住院/体检号
+    private String number;
+
+
+
+    //类型 字典表 1门诊 2急诊 3住院 4体检
+    private String type;
+
+    //患者姓名
+    private String personName;
+
+    //性别
+    private String sex;
+
+    //年龄
+    private String age;
+
+    //申请科室名称
+    private String rpt_dept;
+
+    //申请科室代码
+    private String rpc_code;
+
+    @Transient
+    @TableField(exist = false)
+    private String op_em_mark;//1、门诊，2、急诊，3、住院，4、体检
+    @Transient
+    @TableField(exist = false)
+    private String op_em_no;//门诊/急诊/住院/体检号
+
+
+
+    //检查名称
+    private String proj_name;
+
+    //检查部位描述
+    private String ckpt_name;
+
+    //检查科室代码
+    private String ckdpt_code;
+
+    //检查科室名称
+    private String ckdpt_name;
+
+    //检查地点
+    private String pos_name;
+
+    //金额
+    private String cost;
+
+    //预约时间
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date appoint_time;
+
+    //核对时间
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date checkTime;
+
+    //申请备注
+    private String app_remark;
+
+    //患者信息核实科室代码
+    private String pat_verify_dept_code;
+
+    //患者信息核实科室名称
+    private String pat_verify_dept_name;
+
+    //患者信息核实技师工号
+    private String pat_verify_code;
+
+    //患者信息核实技师姓名
+    private String pat_verify_name;
+
+    //患者信息核实时间
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date pat_verify_time;
+
+    //状态 确认接口调用状态  1成功
+    private String status;
+
+
+    private String createUserName;
+
+    private String createUser;
+    private String updateUser;
+    //核对时间
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date createTime;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date updateTime;
+
+    //@Comment("是否删除 0:正常  1：删除")
+    private Integer isDel;
+
+
+    @Transient
+    @TableField(exist = false)
+    private Integer pageNo;
+
+    @Transient
+    @TableField(exist = false)
+    private Integer pageSize;
+
+    //核对开始时间
+    @Transient
+    @TableField(exist = false)
+    private String startTime;
+
+    ////核对结束时间
+    @Transient
+    @TableField(exist = false)
+    private String endTime;
+
+
+
+
+}

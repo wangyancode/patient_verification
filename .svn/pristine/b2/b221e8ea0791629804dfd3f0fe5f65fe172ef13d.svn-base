@@ -1,0 +1,123 @@
+package com.dincher.project.system.controller;
+
+import com.dincher.common.utils.SecurityUtils;
+import com.dincher.common.utils.StringUtils;
+import com.dincher.common.utils.poi.revise.ReviseExcelUtil;
+import com.dincher.framework.web.controller.BaseController;
+import com.dincher.framework.web.domain.AjaxResult;
+import com.dincher.framework.web.domain.ExcelEntity;
+import com.dincher.framework.web.page.TableDataInfo;
+import com.dincher.project.system.domain.entity.DictData;
+import com.dincher.project.system.service.DictDataService;
+import com.dincher.project.system.service.DictTypeService;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 数据字典信息
+ * 
+ *
+ */
+@RestController
+@RequestMapping("/system/dict/data")
+public class DictDataController extends BaseController
+{
+    @Resource
+    private DictDataService dictDataService;
+
+    @Resource
+    private DictTypeService dictTypeService;
+
+    @GetMapping("/list")
+    public TableDataInfo list(DictData dictData)
+    {
+        startPage();
+        List<DictData> list = dictDataService.selectDictDataList(dictData);
+        return getDataTable(list);
+    }
+
+    @PostMapping("/export")
+    public void export(HttpServletResponse response, DictData dictData)
+    {
+        List<DictData> list = dictDataService.selectDictDataList(dictData);
+        ReviseExcelUtil<DictData> util = new ReviseExcelUtil<DictData>(DictData.class);
+        ExcelEntity excel = new ExcelEntity();
+        excel.setFileName("字典值");
+        //工作表名称
+        List<String> sheetNames = new ArrayList<String>();
+        sheetNames.add("字典值");
+        excel.setSheetNames(sheetNames);
+        //需要导出的数据
+        List<List<DictData>> data = new ArrayList<List<DictData>>();
+        data.add(list);
+        util.exportExcel(data, excel, response);
+    }
+
+    /**
+     * 查询字典数据详细
+     */
+    @GetMapping(value = "/{dictCode}")
+    public AjaxResult getInfo(@PathVariable Integer dictCode)
+    {
+        return AjaxResult.success(dictDataService.selectDictDataById(dictCode));
+    }
+
+    /**
+     * 根据字典类型查询字典数据信息
+     */
+    @GetMapping(value = "/type/{dictType}")
+    public AjaxResult dictType(@PathVariable String dictType)
+    {
+        List<DictData> data = dictTypeService.selectDictDataByType(dictType);
+        if (StringUtils.isNull(data))
+        {
+            data = new ArrayList<DictData>();
+        }
+        return AjaxResult.success(data);
+    }
+
+    @GetMapping(value = "/typeApp/{dictType}")
+    public AjaxResult dictTypeApp(@PathVariable String dictType)
+    {
+        List<DictData> data = dictTypeService.selectDictDataByType(dictType);
+        if (StringUtils.isNull(data))
+        {
+            data = new ArrayList<DictData>();
+        }
+        return AjaxResult.success(data);
+    }
+
+    /**
+     * 新增字典类型
+     */
+    @PostMapping
+    public AjaxResult add(@Validated @RequestBody DictData dict)
+    {
+        dict.setCreateBy(SecurityUtils.getLoginUser().getUser().getUserId());
+        return toAjax(dictDataService.insertDictData(dict));
+    }
+
+    /**
+     * 修改保存字典类型
+     */
+    @PutMapping
+    public AjaxResult edit(@Validated @RequestBody DictData dict)
+    {
+        dict.setUpdateBy(SecurityUtils.getLoginUser().getUser().getUserId());
+        return toAjax(dictDataService.updateDictData(dict));
+    }
+
+    /**
+     * 删除字典类型
+     */
+    @DeleteMapping("/{dictCodes}")
+    public AjaxResult remove(@PathVariable Integer[] dictCodes)
+    {
+        return toAjax(dictDataService.deleteDictDataByIds(dictCodes));
+    }
+}

@@ -1,0 +1,282 @@
+<template>
+	<view class="login">
+			<view class="u-demo-title u-flex u-margin-top-40 ">
+				<u-icon name="arrow-leftward" :size="36" @click="$util.goback()"></u-icon>
+				<view class="u-flex-2 u-text-left u-margin-left-20 u-font-30">
+					忘记密码
+				</view>
+			</view>
+			<view class="u-demo-area">
+				<u-toast ref="uToast"></u-toast>
+				<form @submit="formSubmit" @reset="formReset">
+					<view class="container">
+						<view class="container-input u-margin-top-30">
+							<view class="u-input" >
+								 <input placeholder="填写账号"  name="account"  />
+							</view>
+							<view class="u-flex" >
+								<view class="u-input " style="width: 30%;" >
+									<picker @change="changeCountry" :value="selectd" :range="countrys" class="text-left">
+										<view class="picker u-text-center ">
+											<text class="diy-text-blue u-type-primary u-font-32">+{{ countrys[selectd] }}</text>
+											<u-icon name="arrow-down" :size="18" class="picker-arrow u-margin-left-30"></u-icon>
+										</view>
+									</picker>
+								</view>
+								<view class="u-input" style="width: 70%;margin-left: 3%;" >
+									<input placeholder="填写手机号吗" class="radius" name="mobile" @input="replacemobile"/>
+								</view>
+							</view>
+							<view class="u-input u-flex ">
+								<input class="u-flex-2" type="text" value="" placeholder="验证码" name="verify"  />
+								<text class="u-flex-1 u-text-center u-font-30" @click="Sendsms" v-if="bindYzmdis == false">{{ yzmText }}</text>
+								<text class="u-flex-1 u-text-center u-font-30" v-if="bindYzmdis == true">{{ yzmText }}</text>
+							</view>
+							<view class="u-input" >
+								 <input placeholder="填写密码"  name="password" password="true" />
+							</view>
+							<view class="u-input">
+								 <input placeholder="再次填写密码" password="true" name="qrpassword"  />
+							</view>
+						</view>
+					</view>
+					<u-button formType="submit" data-name="reg" type="primary" class="login-b" v-if="checkreg==true">确认</u-button>
+					<u-button  data-name="reg" type="primary" class="login-b" v-if="checkreg==false">确认</u-button>
+				</form>
+			</view>
+	</view>
+	
+</template>
+<script>
+	export default {
+		data() {
+			return {
+				show_default:1,
+				countrys: ['886', '86', '852', '62', '63', '60', '82', '81', '84'],
+				selectd: 0,
+				areacode: '886',
+				yzmText: '发送验证码',
+				bindYzmdis: false,
+				mobile: '',
+				checked: true,
+				verify:'',
+				checkreg:true,
+				
+			}
+		},
+		methods: {
+			changeCountry: function(e) {
+				this.selectd = e.target.value;
+				this.areacode = this.countrys[e.target.value];
+			},
+			replacemobile: function(e) {
+				this.mobile = e.target.value;
+			},
+			// 发送短信
+			bindGet() {
+				var count = 60;
+				var interval = setInterval(() => {
+					if (count == 1) {
+						this.yzmText = '发送验证码';
+						this.bindYzmdis = false;
+						clearInterval(interval);
+					} else {
+						var count_ = --count;
+						this.yzmText = '等待' + count_ + 's';
+						this.bindYzmdis = true;
+					}
+				}, 1000);
+			},
+			Sendsms() {
+				if (this.current == 0) {
+					if (this.mobile == '') {
+						uni.showToast({
+							title: '填写手机号',
+							icon: 'none'
+						});
+						return false;
+					}
+				}
+				this.$request
+					.get(this.$util.url('Login/sendSms'), { params: { mobile: this.mobile, areacode: this.areacode } })
+					.then(res => {
+						if (res.data.errno == 1) {
+							this.bindGet();
+							uni.showToast({
+								title: '发送成功',
+								icon: 'none'
+							});
+						} else {
+							uni.showToast({
+								title: res.data.message,
+								icon: 'none'
+							});
+						}
+					})
+					.catch(err => {});
+			},
+			// 提交表单
+			formSubmit(e) {
+				var that = this;
+				var formdata = e.detail.value;
+				if (formdata.account == '') {
+					uni.showToast({
+						title: '请填写账号',
+						icon: 'none'
+					});
+					return false;
+				}
+				if (formdata.mobile == '') {
+					uni.showToast({
+						title: '填写手机号',
+						icon: 'none'
+					});
+					return false;
+				}
+				if (formdata.verify == '') {
+					uni.showToast({
+						title: '填写验证码',
+						icon: 'none'
+					});
+					return false;
+				}
+				if (formdata.password == '') {
+					uni.showToast({
+						title: '请填写密码',
+						icon: 'none'
+					});
+					return false;
+				}
+				if (formdata.password.length < 6) {
+					uni.showToast({
+						title: '密码不能小于6位',
+						icon: 'none'
+					});
+					return false;
+				}
+				if (formdata.password != formdata.qrpassword) {
+					uni.showToast({
+						title: '两次填写的密码不一致',
+						icon: 'none'
+					});
+					return false;
+				}
+				this.checkreg = false;
+				this.$request
+					.post(this.$util.url('Login/forget'), {
+						areacode: this.areacode,
+						mobile: this.mobile,
+						verify: formdata.verify,
+						password: formdata.password,
+						repassword: formdata.qrpassword,
+						account: formdata.account,
+					})
+					.then(res => {
+						if (res.data.errno == 1) {
+							uni.showToast({
+								title: res.data.message,
+								success: function(res2) {
+									setTimeout(function() {
+										that.checkreg=true;
+										uni.redirectTo({
+											url: '../user/login'
+										});
+									}, 1500);
+								}
+							});
+						} else {
+							 that.checkreg=true;
+							uni.showToast({
+								title: res.data.message,
+								icon: 'none'
+							});
+						}
+					})
+					.catch(err => {});
+			}
+		}
+	}
+	
+</script>
+
+<style lang="scss" scoped>
+	
+	
+	.lang-main{
+		padding: 4upx 10upx;
+		border-radius: 8upx;
+		text-align: center;
+	}
+	.lang-select{
+		margin-left: 10upx;
+	}
+	.u-demo-result-line{
+		color:$u-type-primary;
+		font-size: 24upx;
+		border: 1px solid #e3e0e0;
+		padding: 6upx 0upx;
+		border-radius: 6upx;
+	}
+	.login{
+		width: 94%;
+		margin: 0 auto;
+	}
+	
+	.lang-select{
+		margin-left: 10upx;
+	}
+	.container {
+		text-align: left;
+		font-size: 28rpx;
+		color: $u-content-color;
+		margin: 40upx 4% 80upx;
+		.container-title{
+			font-weight: bold;
+			color: #000000;
+			font-size: 46upx;
+		}
+		.reg-tag{
+			color: $u-content-color;
+			margin: 20upx 0;
+		}
+		.container-input{
+			.u-input {
+				border-bottom: 1px solid #ededed;
+				border-radius: 4px;
+				margin-bottom: 10px;
+				height: 30px;
+				font-size: 26rpx;
+				height: 100upx;
+				padding-left: 20upx;
+				line-height: 100upx;
+				input{
+					height: 100upx;
+					line-height: 100upx;
+					font-size: 32upx;
+				}
+				.picker{
+					padding-right: 20upx;
+					.picker-arrow{
+						margin-left: 4upx;
+					}
+				}
+			}
+			.default{
+				border: 1px solid $u-type-primary;
+			}
+			
+		}
+		
+	}
+
+	.login-b{
+		height: 90upx;
+		width: 90%;
+	}
+	.xieyi{
+		text-align: center;
+		width: 100%;
+		margin-top: 30upx;
+		font-size: 26upx;
+	}
+</style>

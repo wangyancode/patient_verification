@@ -1,0 +1,78 @@
+export default {
+	/*
+	 *字符串过程省略的函数
+	 *str 字符串
+	 *num 允许不被省略的长度
+	 */
+	string_part_omit(str, num) {
+		if (str.length > num) {
+			str = str.substring(0, num) + "...";
+		}
+		return str;
+	},
+
+
+	timeInterval(timestamp) {
+		//时间戳转化为天时分秒
+		// 总秒数
+		var second = Math.floor(timestamp / 1000);
+		// 天数
+		var day = Math.floor(second / 3600 / 24);
+		// 小时
+		var hr = Math.floor(second / 3600 % 24);
+		// 分钟
+		var min = Math.floor(second / 60 % 60);
+		// 秒
+		var sec = Math.floor(second % 60);
+		return (day ? day + "天" : '') + (hr ? hr + "小时" : '') + (min ? min + "分钟" : '') + sec + "秒";
+	},
+
+
+
+	// 时间字符串转时间戳
+	timeProcessing(timeDate) {
+		let Time = new Date(timeDate);
+		let timestemp = Time.getTime();
+		return timestemp
+		// console.log(timestemp)//1561345728000
+	},
+
+
+	//获取客户端ID
+	getClientId() {
+		//获取客户端ID和版本号
+		var clientid = '';
+		// #ifdef APP-PLUS
+		// 苹果系统
+		plus.device.getInfo({
+			success: function(e) {
+				clientid = e.uuid;
+				uni.setStorageSync('clientid', clientid);
+			},
+			fail: function(e) {
+				console.log(e);
+			}
+		});
+		// 安卓系统
+		plus.device.getAAID({
+			success: function(e) {
+				clientid = e.aaid;
+				console.log(clientid);
+				uni.setStorageSync('clientid', clientid);
+			},
+			fail: function(e) {
+				console.log(e);
+			}
+		});
+		//老版本、安卓模拟器
+		if (clientid == '') {
+			clientid = plus.device.uuid;
+			uni.setStorageSync('clientid', clientid);
+		}
+		// #endif
+		return clientid;
+	}
+
+
+
+}

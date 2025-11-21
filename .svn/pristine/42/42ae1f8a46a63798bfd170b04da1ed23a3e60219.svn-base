@@ -1,0 +1,226 @@
+<template>
+	<view class="main">
+		<view class="main-head">
+			<view class="main-head-content">
+				<view class="u-demo-title u-flex" @click="$util.goback()">
+					<u-icon name="arrow-left" :size="36" ></u-icon>
+					<view class="u-text-left u-flex-1 u-margin-left-20">
+						设置
+					</view>
+				</view>
+			</view>
+		</view>
+
+		<view class="main-body">
+			<view class="u-margin-top">
+				<view class="u-flex main-body-summary u-border-bottom"
+					@click="$util.navigateTo('/pages/user/resetPwd')">
+					<!--					<image src="../../static/images/azzz.png" mode="aspectFill" style="width: 40upx;height: 40upx;"></image>-->
+					<view class="main-body-type u-flex-3">修改登录密码</view>
+					<u-icon name="arrow-right" :size="32" class="main-body-arrow"></u-icon>
+				</view>
+			</view>
+
+			<view class="u-margin-top">
+				<view class="u-flex main-body-summary u-border-bottom" @click="upDateVersion">
+					<view class="main-body-type u-flex-3">版本更新</view>
+					<view class="main-body-type">{{versionsNo}}</view>
+					<u-icon name="arrow-right" :size="32" class="main-body-arrow"></u-icon>
+				</view>
+			</view>
+		</view>
+		<view class="buttonStyle">
+			<u-button type="primary" class="custom-style" @click="logout">退出登录</u-button>
+		</view>
+
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				isUp: true,
+				versionsNo: '',
+				customStyle: {
+					marginTop: '20px', // 注意驼峰命名，并且值必须用引号包括，因为这是对象
+					lineHeight: '20px',
+					width: '80%'
+				}
+			}
+		},
+		onShow() {
+			// appVersion 当前版本号
+			this.updates()
+		},
+		methods: {
+
+			updates() {
+				var that = this
+				let system = uni.getSystemInfoSync();
+				this.$request.get('/appVersions/checkVersions/' + system.appVersion).then(res => {
+					if (res.data == null) {
+						that.isUp = true
+						that.versionsNo = '最新版本' + system.appVersion
+					} else {
+						that.isUp = false
+						that.versionData = res.data
+						that.versionsNo = '当前版本过低（'+system.appVersion + ')'+'，请及时更新'
+					}
+				})
+			},
+			upDateVersion() {
+				console.log('xxxxx', this.isUp);
+				if (this.isUp) {
+					uni.showToast({
+						title: '已是最新版本，无需更新',
+						duration: 2000,
+						icon: 'none'
+					});
+				} else {
+					console.log(this.versionData);
+					this.downloadFile(this.versionData.documentUrl)
+				}
+			},
+			async downloadFile(url) {
+				uni.showLoading({
+					title: "下载中"
+				});
+				uni.downloadFile({
+					url: url, //仅为示例，并非真实的资源
+					success: (res) => {
+						if (res.statusCode === 200) {
+							uni.hideLoading();
+							uni.showToast({
+								title: "下载成功",
+								icon: "success"
+							});
+							uni.saveFile({
+								tempFilePath: res.tempFilePath,
+								success: function(res) {
+									uni.openDocument({
+										filePath: res.savedFilePath,
+										success: function(res) {
+											// console.log(res, "打开安装包");
+										},
+									});
+								},
+								fail: (err) => {
+									console.log(err, "打开安装包-失败");
+								},
+							});
+						}
+					},
+					fail: (err) => {
+						console.log(err, "下载失败");
+						uni.hideLoading();
+						uni.showToast({
+							title: "下载失败,请检查网络",
+							icon: "none",
+							duration: 1500,
+						});
+					},
+				});
+			},
+			//个人中心
+			personCenter() {
+				uni.navigateTo({
+					url: './member/index'
+				});
+			},
+			logout() {
+				this.$request.post('/logout').then(res => {
+					this.clearToken();
+					uni.reLaunch({
+						url: '/pages/user/login'
+					})
+				})
+			},
+			clearToken() {
+				var that = this
+				uni.removeStorageSync('Token')
+				that.$request.setConfig(config => {
+					/* 设置全局配置 */
+					config.header = {
+						...config.header,
+						Authorization: '',
+					};
+					return config;
+				});
+			},
+		}
+	}
+</script>
+
+<style lang="scss" scoped>
+	.main-head {
+		background: url('../../static/images/headTop.png') no-repeat;
+		background-size: contain;
+
+		.main-head-content {
+			width: 92%;
+			margin: 0 auto;
+			height: 220upx;
+
+			.u-demo-title {
+				padding-top: 30upx;
+				color: #ffffff;
+				height: 170upx;
+				line-height: 140upx;
+				font-size: 34upx;
+			}
+
+			.member-info {
+				padding: 72upx 0 10upx;
+				align-items: center;
+				border-radius: 50%;
+				text-align: center;
+
+				.member-info-name {
+					font-size: 32upx;
+					// color: #ffffff;
+				}
+			}
+
+			.main-cate-image {
+				width: 90upx;
+				height: 90upx;
+			}
+		}
+	}
+
+	.main-body {
+		width: 100%;
+		/*margin: 0 auto;*/
+		margin-bottom: 200upx;
+		background-color: #fff;
+
+		.main-body-summary {
+			height: 120upx;
+			line-height: 100upx;
+
+			.main-body-type {
+				margin-left: 40upx;
+				font-size: 30upx;
+			}
+
+			.main-body-arrow {
+				color: #a6acba;
+			}
+		}
+	}
+
+	.updates {
+		margin: 30upx;
+		width: 20%;
+	}
+
+	.buttonStyle {
+		width: 100%;
+		padding: 0 5%;
+		position: absolute;
+		top: 50%;
+		/*margin-top: 50%;*/
+
+	}
+</style>

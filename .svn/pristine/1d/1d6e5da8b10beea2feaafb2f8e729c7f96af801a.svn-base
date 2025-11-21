@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dincher.project.scm.mapper.MessageMapper">
+
+    <select id="selectDataList" resultType="MessageVO">
+        select
+            a.message_id, a.message_content, a.message_code, a.send_time, a.delete_flag, a.create_by, a.create_datetime, a.update_by, a.update_datetime
+        from scm_message a
+        <where>
+            a.delete_flag=0
+            <if test="messageId != null">
+                and a.message_id = #{messageId}
+            </if>
+            <if test="messageContent != null and messageContent != ''">
+                and a.message_content = #{messageContent}
+            </if>
+            <if test="messageCode != null and messageCode != ''">
+                and a.message_code = #{messageCode}
+            </if>
+            <if test="sendTime != null">
+                and a.send_time = #{sendTime}
+            </if>
+            <if test="createBy != null">
+                and a.create_by = #{createBy}
+            </if>
+            <if test="createDatetime != null">
+                and a.create_datetime = #{createDatetime}
+            </if>
+            <if test="updateBy != null">
+                and a.update_by = #{updateBy}
+            </if>
+            <if test="updateDatetime != null">
+                and a.update_datetime = #{updateDatetime}
+            </if>
+        </where>
+    </select>
+
+    <select id="allDataQueryPage" resultType="MessageVO">
+        select
+        sm.message_id, sm.message_content, sm.message_code, sm.send_time,
+        a.box_no, a.group_no, a.distribute_time,
+        sdc.distribute_name, t2.invoice_no
+        from scm_message sm
+        left join  scm_delivery_order a on  sm.box_no = a.box_no
+        left join scm_delivery_company sdc on a.distribute_code = sdc.distribute_code
+        LEFT JOIN (
+        SELECT
+        t1.box_no,
+        GROUP_CONCAT(t1.invoice_no) AS invoice_no
+        FROM
+        scm_delivery_order_details t1
+        WHERE
+        t1.delete_flag = 0
+        GROUP BY
+        t1.box_no
+        ) t2 ON a.box_no = t2.box_no
+        <where>
+            a.delete_flag=0
+            <if test="messageContent != null and messageContent != ''">
+                and a.message_content  like concat('%',#{messageContent},'%'
+            </if>
+        </where>
+        order by sm.send_time desc
+    </select>
+</mapper>
+
+

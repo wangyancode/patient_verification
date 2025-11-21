@@ -1,0 +1,237 @@
+package com.dincher.project.system.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.dincher.common.exception.CustomException;
+import com.dincher.common.utils.SecurityUtils;
+import com.dincher.common.utils.ServletUtils;
+import com.dincher.common.utils.StringUtils;
+import com.dincher.framework.security.service.TokenService;
+import com.dincher.framework.web.domain.LoginUser;
+import com.dincher.framework.web.domain.ResponseEntity;
+import com.dincher.framework.web.util.ResponseUtil;
+import com.dincher.project.system.domain.dto.UserPageDTO;
+import com.dincher.project.system.domain.dto.UserQueryDTO;
+import com.dincher.project.system.domain.entity.Role;
+import com.dincher.project.system.domain.vo.UserRegionVO;
+import com.dincher.project.system.domain.vo.UserRoleVO;
+import com.dincher.project.system.domain.vo.UserVO;
+import com.dincher.project.system.mapper.UserMapper;
+import com.dincher.project.system.service.UserRegionService;
+import com.dincher.project.system.service.UserRoleService;
+import com.dincher.project.system.service.UserService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * 用户账号信息(sys_user)业务实现类
+ *
+ * @author wangxiao
+ * @date 2023-07-25 14:03:29
+ */
+@Service
+@Slf4j
+@Transactional
+public class UserServiceImpl extends ServiceImpl<UserMapper, UserVO> implements UserService {
+    @Resource
+    private UserMapper userMapper;
+
+    @Resource
+    private UserRoleService userRoleService;
+
+    @Resource
+    private TokenService tokenService;
+
+    @Resource
+    private UserRegionService userRegionService;
+
+    @Override
+    public List<UserVO> selectDataList(UserPageDTO userPageDTO) {
+        List<UserVO> userVOS = userMapper.selectDataList(userPageDTO);
+        userVOS.stream().forEach(userVO -> {
+            List<Role> roles = userVO.getRoles();
+            if(StringUtils.isNotEmpty(roles)){
+                List<Integer> roleIds = roles.stream().map(role -> role.getRoleId()).collect(Collectors.toList());
+                userVO.setRoleIds(roleIds.stream().toArray(Integer[]::new));
+            }
+        });
+        return userVOS;
+    }
+
+    @Override
+    public boolean saveData(UserVO userVO) {
+        userVO.setResetPasswordFlag("1");
+        userVO.setUserPassword(SecurityUtils.encryptPassword(userVO.getUserPassword()));
+        int insert = userMapper.insert(userVO);
+        if(StringUtils.isNotEmpty(userVO.getRegionValue())){
+            List<UserRegionVO> list = new ArrayList<>();
+            for (String regionValue : userVO.getRegionValue()){
+                UserRegionVO userRegion = new UserRegionVO();
+                userRegion.setUserId(userVO.getUserId());
+                userRegion.setRegionValue(regionValue);
+                list.add(userRegion);
+            }
+            userRegionService.saveBatch(list);
+        }
+        if(StringUtils.isNotEmpty(userVO.getRoleIds())){
+            List<UserRoleVO> list = new ArrayList<>();
+            for (Integer roleId : userVO.getRoleIds()){
+                UserRoleVO ur = new UserRoleVO();
+                ur.setUserId(userVO.getUserId());
+                ur.setRoleId(roleId);
+                list.add(ur);
+            }
+            userRoleService.saveBatch(list);
+        }
+        return insert > 0;
+    }
+
+    @Override
+    public boolean updateData(UserVO userVO) {
+        boolean clearLoginInfoFlag = false;
+        UserVO oldUser = userMapper.selectById(userVO.getUserId());
+        int update = userMapper.updateById(userVO);
+        if(StringUtils.isNotEmpty(userVO.getRegionValue())){
+            List<UserRegionVO> oldUserRegion = userRegionService.list(new QueryWrapper<UserRegionVO>().eq("user_id", userVO.getUserId()));
+            if(userVO.getRegionValue().size() != oldUserRegion.size()){
+                clearLoginInfoFlag = true;
+            }else{
+                for (String regionValue : userVO.getRegionValue()){
+                    List<UserRegionVO> filterResult = oldUserRegion.stream().filter(r -> r.getRegionValue().equals(regionValue)).collect(Collectors.toList());
+                    if(StringUtils.isEmpty(filterResult)){
+                        clearLoginInfoFlag = true;
+                        break;
+                    }
+                }
+            }
+            userRegionService.remove(new QueryWrapper<UserRegionVO>().eq("user_id",userVO.getUserId()));
+            List<UserRegionVO> list = new ArrayList<>();
+            for (String regionValue : userVO.getRegionValue()){
+                UserRegionVO userRegion = new UserRegionVO();
+                userRegion.setUserId(userVO.getUserId());
+                userRegion.setRegionValue(regionValue);
+                list.add(userRegion);
+            }
+            userRegionService.saveBatch(list);
+        }
+        if(StringUtils.isNotEmpty(userVO.getRoleIds())){
+            if(!clearLoginInfoFlag){
+                List<UserRoleVO> oldUserRoles = userRoleService.list(new QueryWrapper<UserRoleVO>().eq("user_id", userVO.getUserId()));
+                if(userVO.getRoleIds().length != oldUserRoles.size()){
+                    clearLoginInfoFlag = true;
+                }else{
+                    for (Integer roleId : userVO.getRoleIds()){
+                        List<UserRoleVO> filterResult = oldUserRoles.stream().filter(r -> r.getRoleId() == roleId).collect(Collectors.toList());
+                        if(StringUtils.isEmpty(filterResult)){
+                            clearLoginInfoFlag = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            // 删除用户原来的角色
+            userRoleService.deleteData(userVO.getUserId());
+            List<UserRoleVO> list = new ArrayList<>();
+            for (Integer roleId : userVO.getRoleIds()){
+                UserRoleVO ur = new UserRoleVO();
+                ur.setUserId(userVO.getUserId());
+                ur.setRoleId(roleId);
+                list.add(ur);
+            }
+            userRoleService.saveBatch(list);
+        }
+        if(clearLoginInfoFlag){
+            LoginUser loginUser = new LoginUser();
+            loginUser.setUser(oldUser);
+            tokenService.delLoginUser(loginUser);
+        }
+        return update > 0;
+    }
+
+    /**
+     *
+     * @description //TODO  修改密码
+     * @author wangxiao
+     * @date 2023/8/4
+     * @param oldPassword,newPassword
+     * @return com.dincher.framework.web.domain.ResponseEntity<java.lang.Boolean>
+     */
+    @Override
+    public ResponseEntity<Boolean> updatePwd(String oldPassword, String newPassword) {
+        LoginUser loginUser = tokenService.getLoginUser(ServletUtils.getRequest());
+        if (loginUser == null) {
+            throw new CustomException("用户未登录或登录已失效，请重新登录！");
+        }
+        String account = loginUser.getUser().getUserAccount();
+        String password = loginUser.getPassword();
+        if (!SecurityUtils.matchesPassword(oldPassword, password)) {
+            return ResponseUtil.error("修改密码失败，旧密码错误");
+        }
+        if (SecurityUtils.matchesPassword(newPassword, password)) {
+            return ResponseUtil.error("新密码不能与旧密码相同");
+        }
+        UserVO userVO = new UserVO();
+        userVO.setUserPassword(SecurityUtils.encryptPassword(newPassword));
+        userVO.setResetPasswordFlag("0");
+        if (userMapper.update(userVO,new UpdateWrapper<UserVO>().eq("user_account",account)) > 0) {
+            // 更新缓存用户密码
+            loginUser.getUser().setUserPassword(SecurityUtils.encryptPassword(newPassword));
+            tokenService.setLoginUser(loginUser);
+            return ResponseUtil.success();
+        }
+        return ResponseUtil.error("修改密码失败，请联系管理员");
+    }
+
+    /**
+     *
+     * @description //TODO  通过账号查询用户信息
+     * @author wangxiao
+     * @date 2023/10/30
+     * @param useAccount
+     * @return com.dincher.project.system.domain.vo.UserVO
+     */
+    @Override
+    public UserVO getUserByUserAccount(String useAccount) {
+        return userMapper.getUserByUserAccount(useAccount);
+    }
+
+    @Override
+    public UserVO getPersonalInfo() {
+        LoginUser loginUser = tokenService.getLoginUser(ServletUtils.getRequest());
+        return userMapper.getPersonalInfo(loginUser.getUser().getUserId());
+    }
+
+    @Override
+    public int updateAvatar(Integer documentId) {
+        LoginUser loginUser = tokenService.getLoginUser(ServletUtils.getRequest());
+        UserVO userVO = new UserVO();
+        userVO.setUserId(loginUser.getUser().getUserId());
+        userVO.setDocumentId(documentId);
+        return userMapper.updateById(userVO);
+    }
+
+    /**
+     *
+     * @description //TODO  通过查询条件获取用户信息
+     * @author wangxiao
+     * @date 2023/10/26
+     * @param userQueryDTO
+     * @return java.util.List<com.dincher.project.system.domain.vo.UserVO>
+     */
+    @Override
+    public List<UserVO> getUserListByQueryParam(UserQueryDTO userQueryDTO) {
+        return userMapper.getUserListByQueryParam(userQueryDTO);
+    }
+
+    public static void main(String[] args) {
+        System.out.println(SecurityUtils.encryptPassword("Jsdc@0516"));
+    }
+}
+

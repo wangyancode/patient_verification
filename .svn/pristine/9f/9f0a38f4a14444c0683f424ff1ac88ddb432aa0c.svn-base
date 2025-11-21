@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dincher.project.scm.mapper.DeliveryOrderDetailsMapper">
+
+    <select id="selectDataList" resultType="DeliveryOrderDetailsVO">
+        select
+        a.distributionserial_id, a.order_id, a.orderdetail_id, a.invoice_no, a.platform_drug_code,
+        a.procurecatalog_id, a.province_id, a.drug_name, a.drug_type, a.drug_specs, a.form_name,
+        a.production_code, a.production_name, a.license_no, a.approval_no, a.valid_date, a.order_count,
+        a.distribute_count, a.unit, a.distribute_time, a.price, a.amount, a.supplier_code, a.supplier_name,
+        a.supplier_drug_code, a.is_expensive, a.delete_flag, a.create_by, a.create_datetime, a.update_by,
+        a.update_datetime, a.box_no, a.drug_check_status, a.drug_check_datetime, a.check_count
+        from scm_delivery_order_details a
+        <where>
+            a.delete_flag=0
+            <if test="distributionserialId != null and distributionserialId != ''">
+                and a.distributionserial_id = #{distributionserialId}
+            </if>
+            <if test="orderId != null and orderId != ''">
+                and a.order_id = #{orderId}
+            </if>
+            <if test="orderdetailId != null and orderdetailId != ''">
+                and a.orderdetail_id = #{orderdetailId}
+            </if>
+            <if test="invoiceNo != null and invoiceNo != ''">
+                and a.invoice_no = #{invoiceNo}
+            </if>
+            <if test="platformDrugCode != null and platformDrugCode != ''">
+                and a.platform_drug_code = #{platformDrugCode}
+            </if>
+            <if test="procurecatalogId != null and procurecatalogId != ''">
+                and a.procurecatalog_id = #{procurecatalogId}
+            </if>
+            <if test="provinceId != null and provinceId != ''">
+                and a.province_id = #{provinceId}
+            </if>
+            <if test="drugName != null and drugName != ''">
+                and a.drug_name = #{drugName}
+            </if>
+            <if test="drugType != null and drugType != ''">
+                and a.drug_type = #{drugType}
+            </if>
+            <if test="drugSpecs != null and drugSpecs != ''">
+                and a.drug_specs = #{drugSpecs}
+            </if>
+            <if test="formName != null and formName != ''">
+                and a.form_name = #{formName}
+            </if>
+            <if test="productionCode != null and productionCode != ''">
+                and a.production_code = #{productionCode}
+            </if>
+            <if test="productionName != null and productionName != ''">
+                and a.production_name = #{productionName}
+            </if>
+            <if test="licenseNo != null and licenseNo != ''">
+                and a.license_no = #{licenseNo}
+            </if>
+            <if test="approvalNo != null and approvalNo != ''">
+                and a.approval_no = #{approvalNo}
+            </if>
+            <if test="validDate != null">
+                and a.valid_date = #{validDate}
+            </if>
+            <if test="orderCount != null">
+                and a.order_count = #{orderCount}
+            </if>
+            <if test="distributeCount != null">
+                and a.distribute_count = #{distributeCount}
+            </if>
+            <if test="unit != null and unit != ''">
+                and a.unit = #{unit}
+            </if>
+            <if test="distributeTime != null">
+                and a.distribute_time = #{distributeTime}
+            </if>
+            <if test="price != null">
+                and a.price = #{price}
+            </if>
+            <if test="amount != null">
+                and a.amount = #{amount}
+            </if>
+            <if test="supplierCode != null and supplierCode != ''">
+                and a.supplier_code = #{supplierCode}
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                and a.supplier_name = #{supplierName}
+            </if>
+            <if test="supplierDrugCode != null and supplierDrugCode != ''">
+                and a.supplier_drug_code = #{supplierDrugCode}
+            </if>
+            <if test="isExpensive != null and isExpensive != ''">
+                and a.is_expensive = #{isExpensive}
+            </if>
+            <if test="createBy != null">
+                and a.create_by = #{createBy}
+            </if>
+            <if test="createDatetime != null">
+                and a.create_datetime = #{createDatetime}
+            </if>
+            <if test="updateBy != null">
+                and a.update_by = #{updateBy}
+            </if>
+            <if test="updateDatetime != null">
+                and a.update_datetime = #{updateDatetime}
+            </if>
+            <if test="boxNo != null and boxNo != ''">
+                and a.box_no = #{boxNo}
+            </if>
+            <if test="drugCheckStatus != null and drugCheckStatus != ''">
+                and a.drug_check_status = #{drugCheckStatus}
+            </if>
+            <if test="drugCheckDatetime != null">
+                and a.drug_check_datetime = #{drugCheckDatetime}
+            </if>
+            <if test="checkCount != null">
+                and a.check_count = #{checkCount}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectDataGroupByBoxNoAndApprovalNo" resultType="DeliveryOrderDetailsVO"
+            parameterType="DeliveryOrderDetailGroupQueryDTO">
+        SELECT
+        any_value ( a.distributionserial_id ) distributionserial_id,
+        any_value ( a.id ) id,
+        any_value (a.order_id) order_id,
+        any_value (a.orderdetail_id) orderdetail_id,
+        any_value (a.invoice_no) invoice_no,
+        any_value (a.platform_drug_code) platform_drug_code,
+        any_value (a.procurecatalog_id) procurecatalog_id,
+        any_value (a.province_id) province_id,
+        any_value (a.drug_name) drug_name,
+        any_value (
+        case a.drug_type
+        WHEN '1' THEN '西药'
+        WHEN '2' THEN '中成药'
+        WHEN '3' THEN '草药'
+        ELSE ''
+        END) drug_type,
+        any_value (a.drug_specs) drug_specs,
+        any_value (a.form_name) form_name,
+        any_value (a.production_code) production_code,
+        any_value (a.production_name) production_name,
+        any_value (a.license_no) license_no,
+        any_value (a.approval_no) approval_no,
+        any_value (a.valid_date) valid_date,
+        any_value (a.order_count) order_count,
+        sum(any_value (a.distribute_count)) allDistributeCount,
+        any_value (a.distribute_count) distribute_count,
+        any_value (a.unit) unit,
+        any_value (a.distribute_time) distribute_time,
+        any_value (a.price) price,
+        any_value (a.amount) amount,
+        any_value (a.supplier_code) supplier_code,
+        any_value (a.supplier_name) supplier_name,
+        any_value (a.supplier_drug_code) supplier_drug_code,
+        any_value (
+        case a.is_expensive
+        WHEN '1' THEN '是'
+        WHEN '2' THEN '否'
+        ELSE '否'
+        END) is_expensive,
+        any_value (a.delete_flag) delete_flag,
+        any_value (a.create_by) create_by,
+        any_value (a.create_datetime) create_datetime,
+        any_value (a.update_by) update_by,
+        any_value (a.update_datetime) update_datetime,
+        any_value (a.box_no) box_no,
+        any_value (a.drug_check_status) drug_check_status,
+        any_value (a.drug_check_datetime) drug_check_datetime,
+        any_value (a.check_count) check_count,
+        any_value (a.pieces) pieces,
+        any_value (a.ajust_count) ajust_count,
+        any_value (a.distribute_code) distribute_code,
+        count( 1 ) boxCount
+        FROM
+        scm_delivery_order_details a
+        LEFT JOIN scm_delivery_order sdo ON a.box_no = sdo.box_no
+        <where>
+            a.delete_flag=0
+            <if test="boxNos != null and boxNos.size > 0">
+                and sdo.box_no in
+                <foreach item="boxNo" collection="boxNos" open="(" separator="," close=")">
+                    #{boxNo}
+                </foreach>
+            </if>
+            <if test="drugCheckStatus != null and drugCheckStatus != ''">
+                and a.drug_check_status = #{drugCheckStatus}
+            </if>
+        </where>
+        GROUP BY
+        a.approval_no,
+        a.drug_name
+
+    </select>
+
+
+    <select id="selectDataGroupByBoxNoAndApprovalNoNotGroup" resultType="DeliveryOrderDetailsVO"
+            parameterType="DeliveryOrderDetailGroupQueryDTO">
+        SELECT
+        a.distributionserial_id distributionserial_id,
+        a.id id,
+        a.order_id order_id,
+        a.orderdetail_id orderdetail_id,
+        a.invoice_no invoice_no,
+        a.platform_drug_code platform_drug_code,
+        a.procurecatalog_id procurecatalog_id,
+        a.province_id province_id,
+        a.drug_name drug_name,
+        CASE
+        a.drug_type
+        WHEN '1' THEN
+        '西药'
+        WHEN '2' THEN
+        '中成药'
+        WHEN '3' THEN
+        '草药' ELSE ''
+        END drug_type,
+        a.drug_specs drug_specs,
+        a.form_name form_name,
+        a.production_code production_code,
+        a.production_name production_name,
+        a.license_no license_no,
+        a.approval_no approval_no,
+        a.valid_date valid_date,
+        a.order_count order_count,
+        a.distribute_count  allDistributeCount,
+        a.distribute_count distribute_count,
+        a.unit unit,
+        a.distribute_time distribute_time,
+        a.price price,
+        a.amount amount,
+        a.supplier_code supplier_code,
+        a.supplier_name supplier_name,
+        a.supplier_drug_code supplier_drug_code,
+        CASE
+        a.is_expensive
+        WHEN '1' THEN
+        '是'
+        WHEN '2' THEN
+        '否' ELSE '否'
+        END is_expensive,
+        a.delete_flag delete_flag,
+        a.create_by create_by,
+        a.create_datetime create_datetime,
+        a.update_by update_by,
+        a.update_datetime update_datetime,
+        a.box_no box_no,
+        a.drug_check_status drug_check_status,
+        a.drug_check_datetime drug_check_datetime,
+        a.check_count check_count,
+        a.pieces pieces,
+        a.ajust_count ajust_count,
+        a.distribute_code distribute_code,
+        1 boxCount
+        FROM
+        scm_delivery_order_details a
+        LEFT JOIN scm_delivery_order sdo ON a.box_no = sdo.box_no
+        <where>
+            a.delete_flag=0
+            <if test="boxNos != null and boxNos.size > 0">
+                and sdo.box_no in
+                <foreach item="boxNo" collection="boxNos" open="(" separator="," close=")">
+                    #{boxNo}
+                </foreach>
+            </if>
+            <if test="drugCheckStatus != null and drugCheckStatus != ''">
+                and a.drug_check_status = #{drugCheckStatus}
+            </if>
+        </where>
+
+    </select>
+</mapper>
+
+

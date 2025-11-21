@@ -1,0 +1,17 @@
+// 登录
+const login = (data) => uni.$uv.http.post('/login', data)
+const getInfo = (params) => uni.$uv.http.get('/getInfo', {params})
+const getDict = (dictType) => uni.$uv.http.get(`/system/dict/data/type/${dictType}`)
+const getVersion = (params) => uni.$uv.http.get(`/appVersions/getLastVersions`, {params})
+const updatePwd = (params) => uni.$uv.http.get(`/user/updatePwd`, {params})
+const getCodeInfo = (params) => uni.$uv.http.get(`/patient/encapsulateData`, {params})
+const confirmUser = (data) => uni.$uv.http.post(`/patient/confirm`, data)
+ export default{
+	login,
+	getInfo,
+	getDict,
+	getVersion,
+	updatePwd,
+	getCodeInfo,
+	confirmUser
+ }

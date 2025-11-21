@@ -1,0 +1,32 @@
+package com.dincher.project.scm.controller;
+
+
+import com.dincher.framework.web.controller.BaseController;
+import com.dincher.framework.web.domain.ResponseEntity;
+import com.dincher.framework.web.util.ResponseUtil;
+import com.dincher.project.scm.service.PatientRecordsService;
+import com.dincher.project.scm.domain.PatientRecords;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+
+@RestController
+@RequestMapping("/patient")
+public class PatientRecordsController extends BaseController{
+
+    @Autowired
+    private PatientRecordsService patientRecordsService;
+
+    /**
+     *
+     *患者身份核对记录
+     * @author wzn
+     * @date 2025/06/20 17:08
+     */
+    @PostMapping("page")
+    public ResponseEntity getList(@RequestBody PatientRecords patientRecords) {
+        return ResponseUtil.success(patientRecordsService.selectPageList(patientRecords));
+    }
+
+}
+

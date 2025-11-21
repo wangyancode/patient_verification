@@ -1,0 +1,116 @@
+const wifiSdk = uni.requireNativePlugin('gtsplSdk-wifi');
+
+var printer = {}
+printer.netSdkOpen = (printInfo) => {
+  // this.$emit("showMessage", ""); //清空訊息區
+  console.log(wifiSdk);
+  wifiSdk?.GTSPL_setCmdSendMode("P");
+  let isConnect = false;
+  try {
+    isConnect = wifiSdk?.GTSPL_openPort(
+      printInfo.ip,
+      parseInt(9100),
+      4000
+    );
+  } catch (e) {
+    console.warn('k debug: GTSPL_openPort error=', e);
+  }
+
+  this.message = isConnect ? "成功連線至網路。" : "無法連線至網路。";
+  console.log(this.message, 'message');
+  return isConnect;
+  // this.$emit("showMessage", this.message); // 傳回訊息
+},
+
+  printer.netSdkClose = () => {
+    // this.$emit("showMessage", ""); //清空訊息區
+    let result;
+    try {
+      result = wifiSdk.GTSPL_closePort(1000);
+      // console.log('k debug: GTSPL_closePort res=', result);
+    } catch (e) {
+      console.warn('k debug: GTSPL_closePort error=', e);
+    }
+
+    this.message = result ? "成功中斷連線。" : "無法中斷連線。";
+
+    // this.$emit("showMessage", this.message);
+  },
+  printer.printBlock = async (printInfo) => {
+
+    await  printInfo.map(async (item) =>{
+      await wifiSdk?.GTSPL_clearBuffer();
+      // await wifiSdk?.GTSPL_sendCommand(`BOX 10,10,410,310,1\r\n`);
+      //x, y, ,width,height,fontname, rotation, x_scale, y_scale,space,align,content)
+      // await wifiSdk?.GTSPL_printFontBlock("15", "15", "750", "100", "0", "0", "8", "8", "20", "0",
+      // 	"We stand behind our products with one of the most comprehensive support programs in the Auto-ID industry."
+      // );
+
+      await wifiSdk?.GTSPL_printFontBlock("150", 70, "750", "800", "TSS24.BF2", "0", "1", "1", "20", "0",
+        '药箱编号:'
+      );
+      await wifiSdk?.GTSPL_printFontBlock(0, "70", "480", "800", "TSS24.BF2", "0", "1", "1", "20", "3",
+        item.medicineBoxCode
+      );
+      await wifiSdk?.GTSPL_printFontBlock("150", 130, "750", "800", "TSS24.BF2", "0", "1", "1", "20", "0",
+        '药箱类型:'
+      );
+      await wifiSdk?.GTSPL_printFontBlock(0, "130", "480", "800", "TSS24.BF2", "0", "1", "1", "20", "3",
+        item.medicineBoxTypeName
+      );
+      await wifiSdk?.GTSPL_printFontBlock("150", 200, "750", "800", "TSS24.BF2", "0", "1", "1", "20", "0",
+        '药箱名称:'
+      );
+      await wifiSdk?.GTSPL_printFontBlock(0, "200", "480", "800", "TSS24.BF2", "0", "1", "1", "20", "3",
+        item.medicineBoxName
+      );
+      await wifiSdk?.GTSPL_barcode(150, 250, "128", 120, 0, 0, 2, 2, item.medicineBoxCode);
+      await wifiSdk?.GTSPL_printLabel(1, 1);
+      this.message = "printBlock submited";
+    })
+  },
+
+  //  printer.printBlock = async (printInfo) =>{
+  //   await wifiSdk?.GTSPL_clearBuffer();
+  //   // await wifiSdk?.GTSPL_sendCommand(`BOX 10,10,410,310,1\r\n`);
+  //   //x, y, ,width,height,fontname, rotation, x_scale, y_scale,space,align,content)
+  //   // await wifiSdk?.GTSPL_printFontBlock("15", "15", "750", "100", "0", "0", "8", "8", "20", "0",
+  //   // 	"We stand behind our products with one of the most comprehensive support programs in the Auto-ID industry."
+  //   // );
+  //   await wifiSdk?.GTSPL_printFontBlock("15", "50", "750", "50", "3", "0", "1", "1", "20", "0",
+  //     printInfo.drugCode
+  //   );
+  //   await printInfo.durgNameArr.map((item,i) =>{
+  //     wifiSdk?.GTSPL_printFontBlock("15", 100+(30*i), "750", "800", "TSS24.BF2", "0", "1", "1", "20", "0",
+  //       item.drugName
+  //     );
+  //   })
+  //   await wifiSdk?.GTSPL_printFontBlock("15", "170", "750", "100", "TSS24.BF2", "0", "1", "1", "20", "0", printInfo.drugOrigin
+  //   );
+  //   await wifiSdk?.GTSPL_printFontBlock("15", "210", "750", "50", "TSS24.BF2", "0", "1", "1", "20", "0",
+  //     printInfo.normalDrugNum+'/'+printInfo.unit
+  //   );
+  //   await wifiSdk?.GTSPL_barcode(200, 250	, "128", 120, 0, 0, 2, 2, printInfo.drugCode);
+  //   await wifiSdk?.GTSPL_printLabel(1, 1);
+  //   this.message = "printBlock submited";
+  // },
+  printer.printAddress = async (printInfo) => {
+    await wifiSdk?.GTSPL_clearBuffer();
+
+    await wifiSdk?.GTSPL_printFontBlock("150", 130, "750", "800", "TSS24.BF2", "0", "1", "1", "20", "0",
+      '发药单号:'
+    );
+    await wifiSdk?.GTSPL_printFontBlock(0, "130", "480", "800", "TSS24.BF2", "0", "1", "1", "20", "3",
+      printInfo.initialDispensingOrderNo
+    );
+    await wifiSdk?.GTSPL_sendCommand(`BOX 150,200,500,310,1\r\n`);
+    await wifiSdk?.GTSPL_printFontBlock("0", "250", "630", "100", "TSS24.BF2", "0", "1", "1", "20", "2",
+      printInfo.wardName
+    );
+    await wifiSdk?.GTSPL_printLabel(1, 1);
+    this.message = "printBlock submited";
+    // this.$emit("showMessage", this.message);
+  }
+
+
+module.exports = printer;

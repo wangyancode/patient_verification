@@ -1,0 +1,11 @@
+ /**
+ * iframe css  样式修改
+ * Copyright (c) 2019 ruoyi
+ */
+
+ /** 左侧菜单隐藏 **/
+ .app-aside-unfolded .aside-wrap {
+	/* display: none !important; */
+	background-color: red !important;
+ }
+

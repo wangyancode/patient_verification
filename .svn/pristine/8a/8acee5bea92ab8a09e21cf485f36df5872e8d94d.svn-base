@@ -1,0 +1,121 @@
+import $request from '../libs/request.js'
+import $config from '../config'
+
+const request = new $request()
+request.setConfig((config) => {
+	/* 设置全局配置 */
+	config.baseUrl = $config.siteroot /* 根域名不同 */
+	if (uni.getStorageSync('loginToken')) {
+		var token = uni.getStorageSync('loginToken');
+		setTimeout(()=>{
+			var pdaId =  uni.getStorageSync('clientid')
+			// console.log('111',pdaId);
+			// if(!uni.getStorageSync('clientid')){
+			// 	this.$p.getClientId()
+			// }
+			// pdaId='11111111'
+			config.header = {
+				...config.header,
+				Authorization: 'Bearer ' + token,
+				pdaId: uni.getStorageSync('clientid'),
+			}
+		},500)
+
+	} else {
+		config.header = {
+			...config.header,
+		}
+	}
+	return config
+})
+
+/**
+ * 自定义验证器，如果返回true 则进入响应拦截器的响应成功函数(resolve)，否则进入响应拦截器的响应错误函数(reject)
+ * @param { Number } statusCode - 请求响应体statusCode（只读）
+ * @return { Boolean } 如果为true,则 resolve, 否则 reject
+ */
+// 有默认，非必写
+request.validateStatus = (statusCode) => {
+	return statusCode === 200
+}
+
+request.interceptor.request((config, cancel) => {
+	/* 请求之前拦截器 */
+	config.header = {
+		...config.header,
+	}
+
+	// console.log(config);
+	/*判斷請求接口$do是否等於login,如果不是判斷token和userinfo是否存在不存在跳登錄頁*/
+
+
+	/*
+	if (!token) { // 如果token不存在，调用cancel 会取消本次请求，但是该函数的catch() 仍会执行
+	  cancel('token 不存在') // 接收一个参数，会传给catch((err) => {}) err.errMsg === 'token 不存在'
+	}
+	*/
+	return config
+})
+
+request.interceptor.response((response) => {
+	/* 对响应成功做点什么 （statusCode === 200），必须return response*/
+	//  if (response.data.code !== 200) { // 服务端返回的状态码不等于200，则reject()
+	//    return Promise.reject(response)
+	//  }
+	// if (response.config.custom.verification) { // 演示自定义参数的作用
+	//   return response.data
+	// }
+
+	// 未设置状态码则默认成功状态
+	const code = response.data.code || 200;
+
+	if (code === 401) {
+		// uni.reLaunch({
+		// 	url: '/pages/user/login'
+		// });
+		uni.showToast({
+			title: '无效的会话，或者会话已过期，请重新登录',
+			icon: 'none',
+			duration: 2000,
+		});
+		setTimeout(function() {
+			uni.reLaunch({
+				url: '/pages/user/login'
+			});
+		}, 2000);
+		// return Promise.reject('无效的会话，或者会话已过期，请重新登录。')
+	} else if (code === 402) {
+		uni.reLaunch({
+			url: '/pages/user/login'
+		});
+		return Promise.reject('对不起，您的账号已停用！')
+	} else if (code === 500) {
+		uni.showToast({
+			title: response.data.msg,
+			icon: 'none',
+			duration: 2000,
+		});
+		return Promise.reject(new Error(response.data.msg))
+	} else if (code === 601) {
+		return Promise.reject('error')
+	} else if (code === 201) {
+		return response.data
+	} else if (code !== 200) {
+		return response.data
+	} else {
+		return response.data
+	}
+	// if (response.data.code && response.data.code == -2) {
+	// 	uni.reLaunch({
+	// 		url: '/pages/user/login'
+	// 	});
+	// }
+	return response.data
+}, (response) => {
+	/*  对响应错误做点什么 （statusCode !== 200），必须return response*/
+	return response.data
+})
+
+export {
+	request
+}

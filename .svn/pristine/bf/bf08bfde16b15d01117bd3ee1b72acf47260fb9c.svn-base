@@ -1,0 +1,424 @@
+<template>
+  <div class="app-container">
+    <div class="dashboard-container">
+      <el-card class="search-box">
+        <div slot="header">
+          <span class="overview-header-title">查询</span>
+
+          <div style="float: right; margin-top: -7px">
+            <el-button type="primary" @click="queryData">
+              <svg-icon icon-class="search" class="marginRight" />查询
+            </el-button>
+            <el-button @click="resetEmpty">
+              <svg-icon icon-class="reset" class="marginRight" />重置
+            </el-button>
+          </div>
+        </div>
+        <div>
+          <el-form
+            :model="listQuery"
+            :inline="true"
+            class="demo-form-inline"
+            label-width="120px"
+          >
+            <el-form-item label="患者姓名">
+              <el-input
+                v-model="listQuery.personName"
+                placeholder="请输入患者姓名"
+                clearable
+                style="width: 240px"
+                @keyup.enter.native="queryData"
+              ></el-input>
+            </el-form-item>
+
+            <el-form-item label="门/急/住/体号">
+              <el-input
+                v-model="listQuery.number"
+                placeholder="请输入门诊/急诊/住院/体检号"
+                clearable
+                style="width: 240px"
+                @keyup.enter.native="queryData"
+              ></el-input>
+            </el-form-item>
+            <el-form-item label="申请科室">
+              <el-input
+                v-model="listQuery.rpt_dept"
+                placeholder="请输入检查科室"
+                clearable
+                style="width: 240px"
+                @keyup.enter.native="queryData"
+              ></el-input>
+            </el-form-item>
+            <el-form-item label="检查名称">
+              <el-input
+                v-model="listQuery.proj_name"
+                placeholder="请输入检查名称"
+                clearable
+                style="width: 240px"
+                @keyup.enter.native="queryData"
+              ></el-input>
+            </el-form-item>
+            <el-form-item label="门/急/住/体类型">
+              <el-input
+                v-model="listQuery.type"
+                placeholder="请输入门诊/急诊/住院/体检类型"
+                clearable
+                style="width: 240px"
+                @keyup.enter.native="queryData"
+              ></el-input>
+            </el-form-item>
+            <el-form-item label="检查部位描述">
+              <el-input
+                v-model="listQuery.ckpt_name"
+                placeholder="请输入检查部位"
+                clearable
+                style="width: 240px"
+                @keyup.enter.native="queryData"
+              ></el-input>
+            </el-form-item>
+            <el-form-item label="核对人">
+              <el-input
+                v-model="listQuery.createUserName"
+                placeholder="请输入核对人"
+                clearable
+                style="width: 240px"
+                @keyup.enter.native="queryData"
+              ></el-input>
+            </el-form-item>
+            <el-form-item label="核对时间">
+              <el-date-picker
+                style="width: 240px"
+                v-model="dateRange"
+                value-format="yyyy-MM-dd"
+                type="daterange"
+                range-separator="-"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+              ></el-date-picker>
+            </el-form-item>
+
+            <!-- <el-form-item label="状态">
+              <el-select
+                v-model="listQuery.param.status"
+                placeholder="全部"
+                clearable
+                style="width: 240px"
+              >
+                <el-option
+                  v-for="item in statusLists"
+                  :key="item.id"
+                  :label="item.label"
+                  :value="item.id"
+                ></el-option>
+              </el-select>
+            </el-form-item> -->
+          </el-form>
+        </div>
+      </el-card>
+      <el-card style="margin-top: 10px">
+        <div slot="header">
+          <span class="overview-header-title">门诊患者身份核对列表</span>
+        </div>
+        <div>
+          <el-table
+            ref="tableRefs"
+            v-loading="loading"
+            element-loading-text="拼命加载中"
+            :data="listData"
+            highlight-current-row
+            stripe
+            :header-cell-style="{ background: '#eff3f7', border: 'none' }"
+            :row-style="{ height: '56px' }"
+            style="width: 100%"
+            height="52.2vh"
+            @selection-change="handleSelection"
+          >
+            <el-table-column
+              label="序号"
+              type="index"
+              fixed="left"
+              align="center"
+            >
+              <template slot-scope="scope">
+                <span>{{
+                  (listQuery.pageNo - 1) * listQuery.pageSize + scope.$index + 1
+                }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column
+              label="门/急/住/体号"
+              prop="number"
+              width="160"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="门/急/住/体类型"
+              width="110"
+              prop="type"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="患者姓名"
+              width="160"
+              prop="personName"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <!-- 性别 年龄 申请科室 检查名称 检查部位描述 检查科室代码 检查科室名称 检查地点 金额 预约时间 核对时间 申请备注 患者信息核实科室代码 患者信息核实科室名称 患者信息核实技师工号 患者信息核实技师姓名 患者信息核实时间 -->
+            <el-table-column
+              label="性别"
+              prop="sex"
+              width="80"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="年龄"
+              prop="age"
+              width="80"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="申请科室"
+              prop="rpt_dept"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="检查名称"
+              prop="proj_name"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="检查部位描述"
+              prop="ckpt_name"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="检查科室代码"
+              prop="ckdpt_code"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="检查科室名称"
+              prop="ckdpt_name"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="检查地点"
+              prop="pos_name"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="金额"
+              prop="cost"
+              width="80"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="预约时间"
+              width="160"
+              prop="appoint_time"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="核对时间"
+              width="160"
+              prop="checkTime"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="核对人"
+              prop="checkUserName"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="申请备注"
+              prop="app_remark"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <!-- 患者信息核实科室代码 患者信息核实科室名称 患者信息核实技师工号 患者信息核实技师姓名 患者信息核实时间 -->
+            <el-table-column
+              label="患者信息核实科室代码"
+              prop="pat_verify_dept_code"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="患者信息核实科室名称"
+              prop="pat_verify_dept_name"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="患者信息核实技师工号"
+              prop="pat_verify_code"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="患者信息核实技师姓名"
+              prop="pat_verify_name"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+            <el-table-column
+              label="患者信息核实时间"
+              prop="pat_verify_time"
+              width="160"
+              align="center"
+              show-overflow-tooltip
+            ></el-table-column>
+
+            <!-- <el-table-column label="状态" align="center">
+              <template slot-scope="scope">
+                <el-switch
+                  v-model="scope.row.status"
+                  active-value="0"
+                  inactive-value="1"
+                  @change="handleStatusChange(scope.row)"
+                ></el-switch>
+              </template>
+            </el-table-column> -->
+
+            <template slot="empty">
+              <div>
+                <!-- <el-empty :image-size="200"></el-empty> -->
+                <div slot="empty">
+                  <p class="table-empty" style>
+                    <img
+                      src="@/assets/images/empty.png"
+                      class="table-empty-image"
+                      style="width: 130px; height: 130px"
+                    />
+                  </p>
+                  <p class="table-empty-text">
+                    <span>暂无数据</span>
+                  </p>
+                </div>
+              </div>
+            </template>
+          </el-table>
+          <div style="text-align: right; padding-top: 15px">
+            <pagination
+              :total="total"
+              :page.sync="listQuery.pageNo"
+              :limit.sync="listQuery.pageSize"
+              @pagination="getData"
+            />
+          </div>
+        </div>
+      </el-card>
+    </div>
+  </div>
+</template>
+<script>
+import { strTrim } from "@/utils";
+import { getPatientDataByPage } from "@/api/deliveryCompany";
+import print from "vue-print-nb";
+
+export default {
+  name: "DeliveryCompany",
+  dicts: ["delivery_person_type"],
+  directives: {
+    print,
+  },
+  data() {
+    return {
+      loading: false,
+      dateRange: [],
+      listData: [],
+      listQuery: {
+        pageNo: 1,
+        pageSize: 10,
+      },
+      total: 0,
+    };
+  },
+  created() {
+    this.getData();
+  },
+  mounted() {},
+
+  methods: {
+    //获取标准列表信息
+    getData() {
+      this.loading = true;
+      getPatientDataByPage(this.listQuery).then((res) => {
+        this.listData = res.data.records;
+        this.total = res.data.total;
+        this.loading = false;
+      });
+    },
+
+    //查询
+    queryData() {
+      this.listQuery.pageNo = 1;
+      if (this.dateRange.length > 0) {
+        this.listQuery.startTime = this.dateRange[0];
+        this.listQuery.endTime = this.dateRange[1];
+      }
+      this.getData();
+    },
+    //清空
+    resetEmpty() {
+      this.dateRange = [];
+      // 清空所有的值
+      this.listQuery = {
+        pageNo: 1,
+        pageSize: 10,
+      };
+      this.getData();
+    },
+  },
+};
+</script>
+<style lang="scss" scoped>
+.container {
+  margin-left: 10px;
+  width: calc(100% - 20px);
+}
+
+.overview-header-title {
+  border-left: 4px solid #2c9ef7;
+  padding-left: 6px;
+  line-height: 28px;
+  font-size: 14px;
+}
+
+.btn {
+  float: right;
+  position: relative;
+  top: -6px;
+}
+
+.tip {
+  position: relative;
+  top: -10px;
+  left: 10px;
+}
+</style>
+
+<style>
+.el-message-box__status {
+  color: #fe7e52;
+}
+
+.el-textarea__inner {
+  font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB,
+    Microsoft YaHei, Arial, sans-serif;
+}
+</style>

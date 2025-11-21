@@ -1,0 +1,13 @@
+//配置信息
+export default {
+	token: 'seay2ayzYL6melipoRLS1LLJRsyymYYL',
+	// siteroot: 'https://www.csb-cf.com/api/',
+	// siteroot: 'http://58.218.188.178:9658',
+	// siteroot: 'http://192.168.0.8:9656',
+	// siteroot: 'http://192.168.1.221:9658',
+	// siteroot: 'http://172.17.3.57:8095',
+	
+	siteroot: 'http://172.168.10.63:9658',
+
+
+}

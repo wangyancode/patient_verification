@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dincher.project.scm.mapper.DeliveryCompanyMapper">
+
+    <select id="selectDataList" resultType="DeliveryCompanyVO">
+        select
+        a.company_id, a.token, a.distribute_name, a.distribute_code, a.delete_flag, a.create_by, a.create_datetime,
+        a.update_by, a.status,
+        a.update_datetime
+        from scm_delivery_company a
+        <where>
+            a.delete_flag=0
+            <if test="companyId != null">
+                and a.company_id = #{companyId}
+            </if>
+            <if test="token != null and token != ''">
+                and a.token = #{token}
+            </if>
+            <if test="status != null and status != ''">
+                and a.status = #{status}
+            </if>
+            <if test="distributeName != null and distributeName != ''">
+                and a.distribute_name like concat('%',#{distributeName},'%')
+            </if>
+            <if test="distributeCode != null and distributeCode != ''">
+                and a.distribute_code = #{distributeCode}
+            </if>
+            <if test="createBy != null">
+                and a.create_by = #{createBy}
+            </if>
+            <if test="createDatetime != null">
+                and a.create_datetime = #{createDatetime}
+            </if>
+            <if test="updateBy != null">
+                and a.update_by = #{updateBy}
+            </if>
+            <if test="updateDatetime != null">
+                and a.update_datetime = #{updateDatetime}
+            </if>
+        </where>
+    </select>
+</mapper>
+
+

@@ -1,0 +1,64 @@
+<template>
+	<view>
+		<button class="bind" @click="bindUserCode">点击扫码</button>
+	</view>
+</template>
+<script>
+	export default {
+		data() {
+			return {
+				userCode: '',
+				main: '',
+				receiver: '',
+				filter: '',
+			}
+		},
+		methods: {
+			//打开扫描头的方法
+			bindUserCode() {
+				console.log(1111);
+				this.initScan();
+				this.startScan();
+			},
+			initScan() {
+				let that = this;
+				//获取Android主Activity
+				that.main = plus.android.runtimeMainActivity();
+				//获取Android意图类
+				let Intent = plus.android.importClass('android.content.Intent');
+				//实例化意图
+				let intent = new Intent();
+				//定义意图，模拟按下L键，L键实际上是打开激光的物理键映射，由厂商提供
+				 // intent.setAction("android.intent.action.keyevent.SCAN_1");
+				intent.setAction("android.preference.CheckBoxPreference");
+				
+				
+				console.log(intent.setAction("android.view.KeyEvent.KEYCODE_1"));
+				//广播这个意图
+				that.main.sendBroadcast(intent);
+				 const IntentFilter = plus.android.importClass('android.content.IntentFilter');
+				//获取Android意图过滤类
+				//实例化意图过滤
+				that.filter = new IntentFilter();
+				//获取扫码成功的意图广播
+				that.filter.addAction("android.intent.ACTION_DECODE_DATA");;
+				that.receiver = plus.android.implements('io.dcloud.feature.internal.reflect.BroadcastReceiver', {
+					onReceive: function(context, intent) {
+						plus.android.importClass(intent);
+						let code = intent.getStringExtra("barcode_string");
+						//成功输出扫码内容
+						console.log(code);
+						uni.showToast({
+							title: code,
+							icon: 'none',
+							duration: 2000,
+						});
+					}
+				});
+			},
+			startScan() {
+				this.main.registerReceiver(this.receiver, this.filter);
+			}
+		}
+	}
+</script>

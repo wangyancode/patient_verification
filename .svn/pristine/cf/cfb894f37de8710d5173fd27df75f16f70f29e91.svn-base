@@ -1,0 +1,33 @@
+package com.dincher.project.scm.service;
+
+
+
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.dincher.project.scm.domain.PatientRecords;
+
+import com.dincher.project.scm.mapper.PatientRecordsMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+
+@Slf4j
+@Service
+@Transactional
+public class PatientRecordsService extends BaseService<PatientRecords> {
+
+    @Autowired
+    private PatientRecordsMapper patientRecordsMapper;
+
+
+    //分页查询
+    public Page<PatientRecords> selectPageList(PatientRecords patientRecords) {
+        Page page = new Page(patientRecords.getPageNo(), patientRecords.getPageSize());
+        Page<PatientRecords> pageList = patientRecordsMapper.selectPageList(page);
+        return pageList;
+    }
+
+
+
+}

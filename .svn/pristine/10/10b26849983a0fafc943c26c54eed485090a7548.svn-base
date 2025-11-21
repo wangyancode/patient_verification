@@ -1,0 +1,107 @@
+<template>
+	<view class="main">
+		<view class="main-head">
+			<view class="main-head-content">
+				<view class="u-demo-title u-flex">
+					<u-icon name="arrow-left" :size="36" @click="$util.goback()"></u-icon>
+					<view class="u-text-left u-flex-1 u-margin-left-20">
+						设置管理
+					</view>
+				</view>
+			</view>
+		</view>
+		<!-- <u-gap height="160"></u-gap> -->
+<!--		<view class="container">-->
+<!--			<u-image width="100%" height="300rpx" src='../../static/images/banner.png'></u-image>-->
+<!--		</view>-->
+		<view class="medicineBox" style="margin-top:15upx">
+
+			<u-grid :col="3" :border="false">
+				<u-grid-item @click='planmanagement' style="background: none;" v-if="type==1">
+					<u-image width="100upx" height="100upx" src='../../static/images/plan.png'></u-image>
+					<view class="grid-text u-font-md u-font-weight u-margin-top-10">方案管理</view>
+				</u-grid-item>
+				<u-grid-item @click='printerManage' style="background: none;">
+					<u-image width="100upx" height="100upx" src='../../static/images/printer.png'></u-image>
+					<view class="grid-text u-font-md u-font-weight u-margin-top-10">打印机管理</view>
+				</u-grid-item>
+			</u-grid>
+		</view>
+
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				customStyle: {
+					marginTop: '20px', // 注意驼峰命名，并且值必须用引号包括，因为这是对象
+					lineHeight:'20px',
+					width:'80%'
+				},
+				type:1,
+			}
+		},
+		onLoad(options) {
+			this.type=options.type
+		},
+		methods: {
+			printerManage(){
+				uni.navigateTo({
+					url: '/pages/dispensing/printerSetting/index'
+				});
+			},
+			planmanagement(){
+				uni.navigateTo({
+					url: '/pages/dispensing/plan/index'
+				});
+			},
+		}
+	}
+</script>
+
+<style lang="scss" scoped>
+	.main-head {
+		background: url('../../static/images/headTop.png') no-repeat;
+		background-size: contain;
+
+		.main-head-content {
+			width: 92%;
+			margin: 0 auto;
+			height: 220upx;
+
+			.u-demo-title {
+				padding-top: 30upx;
+				color: #ffffff;
+				height: 170upx;
+				line-height: 140upx;
+				font-size: 34upx;
+			}
+
+			.member-info {
+				padding: 72upx 0 10upx;
+				align-items: center;
+				border-radius: 50%;
+				text-align: center;
+
+				.member-info-name {
+					font-size: 32upx;
+					// color: #ffffff;
+				}
+			}
+
+			.main-cate-image {
+				width: 90upx;
+				height: 90upx;
+			}
+		}
+	}
+
+	.medicineBox {
+		width: 94%;
+		margin: 0 auto;
+		// padding: 20upx;
+		/*background-color: #fff;*/
+	}
+</style>

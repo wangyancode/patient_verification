@@ -1,0 +1,631 @@
+<template>
+  <div class="app-container">
+    <el-card>
+      <div slot="header">
+        <span class="overview-header-title">查询</span>
+      </div>
+      <div>
+        <el-form :inline="true" :model="searchFormData" class="demo-form-inline" label-width="80px">
+          <el-form-item label="账号">
+            <el-input v-model="searchFormData.useAccount" placeholder="请输入账号" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="姓名">
+            <el-input v-model="searchFormData.userName" placeholder="请输入姓名" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="病区/科室">
+            <el-input v-model="searchFormData.regionName" placeholder="请输入病区/科室" clearable></el-input>
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="searchFormData.userStatus" placeholder="全部" clearable>
+              <el-option v-for="item in statusData" :key="item.id" :label="item.label"
+                         :value="item.value"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="queryData">
+              <svg-icon icon-class="search" class="marginRight"/>
+              查询
+            </el-button>
+            <el-button @click="resetEmpty">
+              <svg-icon icon-class="reset" class="marginRight"/>
+              重置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+    </el-card>
+    <el-card style="margin-top:10px">
+      <div slot="header">
+        <span class="overview-header-title">用户管理列表</span>
+        <div class="btn">
+          <el-button type="primary" size="mini" icon="el-icon-plus" plain @click="addMethods">新 增</el-button>
+        </div>
+      </div>
+      <div>
+        <el-table ref="tableRefs" v-loading="loading" element-loading-text="拼命加载中" :data="listData"
+                  highlight-current-row stripe :header-cell-style="{ background: '#eff3f7', border: 'none' }"
+                  style="width:100%" height="56vh">
+          <el-table-column label="序号" width="100" align="center">
+            <template slot-scope="scope">
+              {{ (scope.$index + 1) + (page.pageNum - 1) * page.pageSize }}
+            </template>
+          </el-table-column>
+          <el-table-column label="账号" prop="userAccount" align="center" show-overflow-tooltip></el-table-column>
+          <el-table-column label="姓名" prop="userName" align="center" show-overflow-tooltip></el-table-column>
+          <el-table-column label="性别" prop="userSex" align="center" show-overflow-tooltip>
+            <template slot-scope="scope">
+              <div>
+                {{ scope.row.userSex == 1 ? '男' : '女' }}
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="科室/病区" prop="roleNames" align="center" show-overflow-tooltip>
+            <template slot-scope="scope">
+              {{scope.row.regionList.filter(x => scope.row.regionValue.includes(x.regionValue)).map(item => {return
+              item.regionName}).join(',')}}
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" prop="userStatus" align="center" show-overflow-tooltip>
+            <template slot-scope="scope">
+              <el-switch v-model="scope.row.userStatus" active-value="0" inactive-value="1"
+                         @change="switchChange(scope.row)">
+              </el-switch>
+            </template>
+          </el-table-column>
+          <el-table-column label="创建时间" prop="createDatetime" align="center"
+                           show-overflow-tooltip></el-table-column>
+          <!-- <el-table-column label="创建人" prop="createByName" align="center" show-overflow-tooltip></el-table-column> -->
+          <!-- <el-table-column label="创建人" prop="createBy" align="center" show-overflow-tooltip></el-table-column> -->
+          <el-table-column label="操作" align="center" width="240">
+            <template slot-scope="scope">
+              <el-button @click="editMethods(scope.row, $event)" type="text">编辑</el-button>
+              <el-button @click="resetMethods(scope.row, $event)" type="text"
+                         style="color:#e6a23c">重置
+              </el-button>
+              <el-button @click="deleteMethods(scope.row, $event)" type="text"
+                         style="color:#f56c6c">删除
+              </el-button>
+              <!-- <el-button plain circle size="mini" type="primary" icon="el-icon-edit" title="编辑"
+                  @click="editMethods(scope.row, $event)"></el-button> -->
+              <!-- <el-button plain circle size="mini" type="warning" icon="el-icon-refresh" title="重置"
+                  @click="resetMethods(scope.row, $event)"></el-button>
+              <el-button plain circle size="mini" type="danger" icon="el-icon-delete" title="删除"
+                  @click="deleteMethods(scope.row, $event)"></el-button> -->
+            </template>
+          </el-table-column>
+          <template slot="empty">
+            <div>
+              <div slot="empty">
+                <p class="table-empty" style>
+                  <img src="@/assets/images/empty.png" class="table-empty-image"
+                       style="width: 130px; height: 130px"/>
+                </p>
+                <p class="table-empty-text">
+                  <span>暂无数据</span>
+                </p>
+              </div>
+            </div>
+          </template>
+        </el-table>
+        <div style="text-align:right;padding-top:15px">
+          <el-pagination background @size-change="handleSizeChange" @current-change="handleCurrentChange"
+                         :current-page="page.pageNum" :page-sizes="[10, 20, 30, 50]" :page-size="page.pageSize"
+                         layout="total, sizes, prev, pager, next, jumper" :total="total"></el-pagination>
+        </div>
+      </div>
+    </el-card>
+    <!-- 新增/编辑 -->
+    <el-dialog :title="addOrEditName" :visible.sync="addOrEditVisible" append-to-body width="700px"
+               v-if="addOrEditVisible">
+      <div>
+        <el-form ref="elDialogForm" :inline="false" :model="addOrEditData" class="demo-form-inline"
+                 label-width="120px" v-if="addOrEditData" :rules="rules">
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="账号" prop="userAccount">
+                <el-input v-model="addOrEditData.userAccount" placeholder="请输入账号" style="width:200px" maxlength="6"
+                          :disabled="myDisable"
+                          clearable></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="姓名" prop="userName">
+                <el-input v-model="addOrEditData.userName" placeholder="请输入姓名" style="width:200px" clearable
+                          maxlength="32"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="性别" prop="userSex">
+                <el-radio-group v-model="addOrEditData.userSex" style="width:200px">
+                  <el-radio label="1">男
+                    <svg-icon icon-class="man" class="sexMargin"/>
+                  </el-radio>
+                  <el-radio label="2">女
+                    <svg-icon icon-class="woman" class="sexMargin"/>
+                  </el-radio>
+                </el-radio-group>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="角色" prop="roleIds">
+                <el-select v-model="addOrEditData.roleIds" placeholder="请选择角色" style="width:200px" clearable>
+                  <el-option v-for="item in rolesObjectData" :key="item.id" :label="item.roleName"
+                             :value="item.roleId * 1"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+
+
+          <!--                    <el-form-item label="职称" prop="positionalTitle">-->
+          <!--                        <el-select v-model="addOrEditData.positionalTitle" placeholder="请选择职称" clearable-->
+          <!--                            style="width:400px">-->
+          <!--                            <el-option v-for="item in userStatusData" :key="item.id" :label="item.dictLabel"-->
+          <!--                                :value="item.dictValue"></el-option>-->
+          <!--                        </el-select>-->
+          <!--                    </el-form-item>-->
+          <el-col>
+            <el-form-item label="病区/科室" prop="regionValue">
+              <el-select v-model="addOrEditData.regionType" placeholder="病区" style="width:200px;margin-bottom: 20px;"
+                         @change="regionCheage">
+                <el-option v-for="(item, key) in regionSelectData" :key="key" :label="item.dictLabel"
+                           :value="item.dictValue">
+                </el-option>
+              </el-select>
+              <el-transfer
+                filterable
+                :titles="['科室/病区','已选']"
+                filter-placeholder="请输入病区/科室"
+                :props="{key: 'dictValue',label: 'dictLabel'}"
+                v-model="addOrEditData.regionValue"
+                :data="projectStatus">
+              </el-transfer>
+            </el-form-item>
+          </el-col>
+        </el-form>
+      </div>
+      <span slot="footer" class="dialog-footer">
+                <el-button @click="addOrEditVisible = false">取 消</el-button>
+                <el-button type="primary" @click="deteRmined">确 定</el-button>
+            </span>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+  import { strTrim } from '@/utils'
+  import {
+    getUserData,
+    addUserData,
+    getRoleData,
+    editUserData,
+    deleteUserData,
+    resetPssword,
+    changeStatus,
+    getInitialPassword,
+    getDicts
+  } from '@/api/getUser/index.js'
+
+  export default {
+    data() {
+      var validateAccount = (rule, value, callback) => {
+        if (value) {
+          var usernameRegex = /^[a-zA-Z0-9]{1,100}$/
+          var isUsernameValid = usernameRegex.test(value)
+          if (!isUsernameValid) {
+            return callback(new Error('账号只能由数字或字母组成'))
+          } else {
+            callback()
+          }
+        } else {
+          return callback(new Error('账号不能为空'))
+        }
+      }
+      var regionValidator = (rule, value, callback) => {
+        if (!value) {
+          if (this.searchFormData.regionType && this.searchFormData.regionValue) {
+            callback()
+          } else {
+            return callback(new Error('请选择病区/科室'))
+          }
+        }
+      }
+      return {
+        statusData: [
+          {
+            label: '启用',
+            value: '0'
+          },
+          {
+            label: '停用',
+            value: '1'
+          }
+        ],
+        activeName: 'first',
+        loading: false,
+        addOrEditVisible: false,
+        addOrEditName: '新增用户',
+        regionSelectData: [
+          {
+            dictLabel: '科室',
+            dictValue: 'user_dept'
+          },
+          {
+            dictLabel: '病区',
+            dictValue: 'user_ward'
+          }
+        ],
+        isFlag: 1,
+        searchFormData: {
+          userAccount: undefined,
+          userStatus: undefined,
+          userName: undefined,
+          regionName: undefined
+        },
+        addOrEditData: {
+          userAccount: '',
+          userName: '',
+          userSex: '1',
+          roleIds: [],
+          regionType: 'user_dept',
+          // positionalTitle: undefined,
+          regionValue: [],
+          userPassword: '123qwe'
+        },
+        initPassword: '123qwe',
+        projectStatus: [],
+        rolesObjectData: [],
+        positionalObjectData: [],
+        listData: [],
+        userStatusData: [],
+        rules: {
+          userAccount: [
+            { required: true, validator: validateAccount, trigger: 'blur' }
+          ],
+          userName: [
+            { required: true, message: '姓名不能为空', trigger: 'blur' }
+          ],
+          userSex: [
+            { required: true, message: '请选择性别', trigger: 'change' }
+          ],
+          roleIds: [
+            { required: true, message: '请选择角色', trigger: 'change' }
+          ],
+          // positionalTitle: [
+          //     { required: true, message: '请选择职称', trigger: 'change' },
+          // ],
+          regionValue: [
+            { required: true, message: '科室/病区不能为空', trigger: 'change' }
+          ]
+        },
+        page: {
+          pageNum: 1,
+          pageSize: 10
+        },
+        total: 0,
+        myDisable: false
+      }
+    },
+    mounted() {
+      this.getSelectData()
+      this.queryData()
+    },
+    methods: {
+      // 获取下拉参数
+      getSelectData() {
+        getRoleData().then(res => {
+          this.rolesObjectData = res.data
+        })
+        getInitialPassword().then(res => {
+          this.initPassword = res.msg
+        })
+        getDicts('position_title').then(res => {
+          this.userStatusData = res.data
+          console.log(res)
+        })
+        this.getDicts('user_dept')
+      },
+      getDicts(dict) {
+        getDicts(dict).then(res => {
+          this.projectStatus = res.data
+        })
+      },
+      regionCheage(e) {
+        this.addOrEditData.regionValue = []
+        this.getDicts(e)
+      },
+      // 查询
+      queryData() {
+        this.page.pageNum = 1
+        this.searchFormData = strTrim(this.searchFormData)
+        let obj = {
+          pageNum: this.page.pageNum,
+          pageSize: this.page.pageSize,
+          param: {
+            useAccount: this.searchFormData.useAccount,
+            userName: this.searchFormData.userName,
+            userStatus: this.searchFormData.userStatus,
+            regionName: this.searchFormData.regionName
+          }
+        }
+        this.getUserData(obj)
+      },
+      getUserData(value) {
+        this.loading = true
+        getUserData(value).then(res => {
+          if (res.code == 200) {
+            this.listData = res.rows
+            this.total = res.total
+          }
+          this.loading = false
+
+        })
+      },
+      // 重置搜索
+      resetEmpty() {
+        this.searchFormData = {
+          userAccount: undefined,
+          userStatus: undefined,
+          userName: undefined,
+          regionName: undefined,
+        },
+          this.queryData()
+      },
+      // 启用/禁用
+      switchChange(value) {
+        console.log(value)
+        if (value.userStatus == '1') {
+          this.$confirm('是否确定停用该用户', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            let obj = {
+              userId: value.userId,
+              userStatus: value.userStatus
+            }
+            // console.log(obj);
+            changeStatus(obj).then(res => {
+              if (res.code == 200) {
+                this.$message({
+                  message: '已停用',
+                  type: 'success'
+                })
+              }
+              this.queryData()
+            })
+          }).catch(() => {
+            this.queryData()
+          })
+        } else {
+          let obj = {
+            userId: value.userId,
+            userStatus: value.userStatus
+          }
+          changeStatus(obj).then(res => {
+            if (res.code == 200) {
+              this.$message({
+                message: '已启用',
+                type: 'success'
+              })
+            }
+            this.queryData()
+          })
+        }
+      },
+      // 新增
+      addMethods() {
+        this.isFlag = 1
+        this.addOrEditData = {
+          userAccount: '',
+          userName: '',
+          userSex: '1',
+          roleIds: '',
+          regionType: 'user_dept',
+          // positionalTitle: undefined,
+          regionValue: [],
+          userPassword: this.initPassword
+        }
+        this.addOrEditName = '新增用户'
+        this.addOrEditVisible = true
+        this.myDisable = false
+      },
+      // 编辑
+      editMethods(row) {
+        this.isFlag = 2
+        this.addOrEditName = '编辑用户'
+        this.addOrEditVisible = true
+        this.addOrEditData = {
+          userId: row.userId,
+          userAccount: row.userAccount,
+          userName: row.userName,
+          userSex: row.userSex,
+          // roleIds: row.roleIds[0],
+          // positionalTitle: row.positionalTitle,
+          regionValue: row.regionValue,
+          // userPassword: this.initPassword,
+          regionType: row.regionType
+        }
+        this.getDicts(row.regionType)
+        this.myDisable = true
+
+      },
+      // 重置密码
+      resetMethods(value) {
+        console.log(value)
+        this.$confirm('是否确定重置该账户密码为 ' + '‘' + this.initPassword + '’' + '?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          let obj = {
+            userId: value.userId,
+            userPassword: this.initPassword
+          }
+          resetPssword(obj).then(res => {
+            if (res.code == 200) {
+              this.$message({
+                message: '重置成功',
+                type: 'success'
+              })
+            }
+          })
+        }).catch(() => {
+
+        })
+      },
+      // 删除
+      deleteMethods(value) {
+        this.$confirm('是否确定删除该用户', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          deleteUserData([value.userId]).then(res => {
+            if (res.code == 200) {
+              this.$message({
+                message: '删除成功',
+                type: 'success'
+              })
+            }
+            this.searchFormData = strTrim(this.searchFormData)
+            let obj = {
+              pageNum: this.page.pageNum,
+              pageSize: this.page.pageSize,
+              param: {
+                useAccount: this.searchFormData.useAccount,
+                userName: this.searchFormData.userName,
+                userStatus: this.searchFormData.userStatus
+              }
+            }
+            this.getUserData(obj)
+          })
+        }).catch(() => {
+
+        })
+      },
+      // 新增/编辑 确认
+      deteRmined() {
+        this.$refs['elDialogForm'].validate((valid) => {
+          if (valid) {
+            if (this.isFlag == 1) {
+              let addData = JSON.parse(JSON.stringify(this.addOrEditData))
+              addData.roleIds = [addData.roleIds]
+              addUserData(addData).then(res => {
+                if (res.code == 200) {
+                  this.$message({
+                    message: '新增成功',
+                    type: 'success'
+                  })
+                  this.addOrEditVisible = false
+                } else {
+                  this.$message({
+                    message: res.msg,
+                    type: 'warning'
+                  })
+                }
+                this.queryData()
+              })
+            } else {
+              let editData = JSON.parse(JSON.stringify(this.addOrEditData))
+              editData.roleIds = [editData.roleIds]
+              console.log(editData)
+              editUserData(editData).then(res => {
+                if (res.code == 200) {
+                  this.$message({
+                    message: '编辑成功',
+                    type: 'success'
+                  })
+                  this.addOrEditVisible = false
+                } else {
+                  this.$message({
+                    message: res.msg,
+                    type: 'warning'
+                  })
+                }
+                this.queryData()
+              })
+            }
+          }
+        })
+      },
+      // 分页
+      handleSizeChange(value) {
+        this.page.pageNum = 1
+        this.page.pageSize = value
+        let obj = {
+          pageNum: this.page.pageNum,
+          pageSize: this.page.pageSize,
+          param: {
+            useAccount: this.searchFormData.useAccount,
+            userName: this.searchFormData.userName,
+            userStatus: this.searchFormData.userStatus
+          }
+        }
+        this.getUserData(obj)
+        this.$refs.tableRefs.bodyWrapper.scrollTop = 0
+      },
+      handleCurrentChange(value) {
+        this.page.pageNum = value
+        let obj = {
+          pageNum: this.page.pageNum,
+          pageSize: this.page.pageSize,
+          param: {
+            useAccount: this.searchFormData.useAccount,
+            userName: this.searchFormData.userName,
+            userStatus: this.searchFormData.userStatus
+          }
+        }
+        this.getUserData(obj)
+        this.$refs.tableRefs.bodyWrapper.scrollTop = 0
+      }
+    }
+  }
+</script>
+
+<style lang="scss" scoped>
+  .overview-header-title {
+    border-left: 4px solid #2c9ef7;
+    padding-left: 6px;
+    line-height: 28px;
+    font-size: 14px;
+  }
+
+  .btn {
+    float: right;
+    position: relative;
+    top: -6px;
+  }
+
+  .tip {
+    position: relative;
+    top: -10px;
+    left: 10px;
+  }
+
+  .sexMargin {
+    margin-left: 2px;
+  }
+
+  ::v-deep {
+    .el-transfer__buttons {
+      /*width: 60px;*/
+      padding: 0 10px !important;
+      /*display: inline-block;*/
+      display: inline-flex;
+      flex-direction: column;
+
+      .el-button + .el-button {
+        margin: 0;
+      }
+    }
+  }
+</style>
+
+<style>
+  .el-message-box__status {
+    color: #fe7e52;
+  }
+</style>

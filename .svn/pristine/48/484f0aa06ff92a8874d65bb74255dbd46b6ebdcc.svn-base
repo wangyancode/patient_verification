@@ -1,0 +1,6 @@
+@font-face {
+    font-family: digitalNumber;       //用法：font-family:digitalNumber
+    src: url('~@/assets/fonts/DigitalNumbers-Regular.ttf');
+    font-weight: bold;   
+    font-style: normal;
+  }

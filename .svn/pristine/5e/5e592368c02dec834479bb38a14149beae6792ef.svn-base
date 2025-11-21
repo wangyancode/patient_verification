@@ -1,0 +1,71 @@
+import $util from "../utils/util"
+import $request from "../utils/request"
+
+export default {
+	// 用户token
+	token: false,
+	// 用户信息
+	userinfo: false,
+	// 初始化
+	__init() {
+		// 获取用户信息
+		this.userinfo = uni.getStorageSync("userinfo");
+		this.token = uni.getStorageSync("token");
+		// this.islogin();
+	},
+	login(options = {}) {
+		console.log(options);
+		this.userinfo = options
+		this.token = "111111"
+		uni.setStorageSync("userinfo", options);
+		uni.setStorageSync("token", this.token);
+		return true;
+	},
+	oauthlogin(uid){
+		var userinfo = []
+		$request.get($util.url('member/index'), { params: { uid:uid } }).then(res => {
+			userinfo = res.data.data
+			this.token =1111111;
+			this.userinfo = userinfo;
+			// 本地存储
+			uni.setStorageSync("userinfo",this.userinfo);
+			uni.setStorageSync("token", this.userinfo);
+		});
+		return true;
+	},
+	updateInfo(uid) {
+		var userinfo = []
+		$request.get($util.url('member/index'), {
+			params: {
+				uid: uid
+			}
+		}).then(res => {
+			userinfo = res.data.data
+			this.token = 1111111;
+			this.userinfo = userinfo;
+			// 本地存储
+			uni.setStorageSync("userinfo", this.userinfo);
+			uni.setStorageSync("token", this.userinfo);
+		});
+		return true;
+	},
+	// 退出登录
+	logout() {
+		// 清除缓存
+		// uni.removeStorageSync('userinfo');
+		// uni.removeStorageSync('token');
+		uni.clearStorage()
+		// 清除状态
+		this.token = false;
+		this.userinfo = false;
+		// 返回home页面
+		uni.navigateTo({
+			url: "/pages/index/login"
+		})
+	},
+	islogin(){
+		if(this.userinfo.id == undefined){
+			$util.navigateTo('/pages/chat/chat');
+		}
+	}
+}

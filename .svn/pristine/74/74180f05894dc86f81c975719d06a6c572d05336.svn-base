@@ -1,0 +1,38 @@
+package com.dincher.project.system.domain.dto;
+
+import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
+
+import javax.validation.constraints.NotBlank;
+import java.io.Serializable;
+
+/**
+ * @Description 登录请求实体
+ * @Author WangXiao
+ * @Date 2022/11/9
+ */
+@Data
+public class LoginDTO implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    @NotBlank(message = "用户账号不能为空")
+    @ApiModelProperty(value = "用户账号",required = true)
+    private String userAccount;
+
+    @NotBlank(message = "用户密码不能为空")
+    @ApiModelProperty(value = "用户密码",required = true)
+    private String password;
+
+    @ApiModelProperty(value = "验证码")
+    private String code;
+
+    @ApiModelProperty(value = "唯一标识")
+    private String uuid = "";
+
+    @ApiModelProperty(value = "复核人账号")
+    private String reCheckerAccount;
+
+    @ApiModelProperty(value = "复核人密码")
+    private String reCheckerPassword;
+
+}

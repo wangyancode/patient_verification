@@ -1,0 +1,713 @@
+<template>
+	<view class="flex_container">
+		<view class="bg_box" :style="{paddingTop:(statusBarHeight+44)+'px'}">
+			<image src="/static/bg/check_bg.png" mode=""></image>
+		</view>
+		<wxx-nav title="患者身份核对" backgroundColor="transparent" color="#fff"></wxx-nav>
+		<view class="search_box flex">
+			<uv-search class="flex-1" placeholder="请扫描或输入申请单" shape="square" :showAction="false" color="#ffffff" bgColor="#2D7EE7"
+				placeholderColor="rgba(255, 255, 255, 0.45)" searchIconColor="rgba(255, 255, 255, 0.45)" height="66rpx"
+				borderColor="rgba(255, 255, 255, 0.12)" v-model="scanCode" @search="scanConfirm">
+			</uv-search>
+			<view class="icon_wrap" @click="handleCode">
+				<uv-icon name="scan" color="#fff" :size="50"></uv-icon>
+			</view>
+		</view>
+		<view class="flex-1 container_box flex-y">
+			<view class="empty_box flex-y flex-xy-center" v-if="isNone">
+				<image src="/static/imgs/img_none.png" mode=""></image>
+				<view>
+					<text>无数据\n请先扫描或输入申请单</text>
+				</view>
+			</view>
+			<template v-else>
+				<view class="tabs flex">
+					<view :class="{active:activeType==el.type}" v-for="el,index in allInfo" :key="index"
+						@click="changeTab(index)">{{el.type|getType}}</view>
+				</view>
+				<view class="user_box flex">
+					<uv-avatar src="" :size="82"></uv-avatar>
+					<view class="flex-1" style="margin-left: 16rpx;">
+						<view class="name">{{nowInfo.name}}</view>
+						<view class="sex" :class="nowInfo.sex=='男'?'man':'woman'">
+							<uv-icon name="man" :size="20" color="#67C23A" v-if="nowInfo.sex=='男'"></uv-icon>
+							<uv-icon name="woman" :size="20" color="#D96BA7" v-else></uv-icon>
+							<text>{{nowInfo.sex}}性</text>
+						</view>
+					</view>
+					<view>
+						<view class="flex type_box">
+							<view>{{nowInfo.type|getType(true)}}</view>
+							<text>{{nowInfo.type|getType}}号</text>
+						</view>
+						<view class="val">{{nowInfo.number|defaultVal}}</view>
+					</view>
+				</view>
+				<scroll-view class="check_container flex-1" scroll-y>
+					<view class="check_item flex" v-for="el,index in nowInfo.list" :key="index" @click="checkIndex(index)">
+						<view class="check_box" :class="{is_check:el.isCheck}">
+							<uv-icon name="checkbox-mark" color="#fff" :size="32"></uv-icon>
+						</view>
+						<view class="flex-1">
+							<view class="flex">
+								<view class="flex-1 flex">
+									<view class="name">{{el.proj_name|defaultVal}}</view>
+									<view class="part">{{el.ckdpt_name|defaultVal}}</view>
+								</view>
+								<view class="flex" @click.stop="el.isShow=!el.isShow">
+									<text class="is_show">{{el.isShow?'收起':'展开'}}</text>
+									<uv-icon :name="el.isShow?'arrow-up-fill':'arrow-down-fill'" :size="20" color="rgba(0, 0, 0, 0.45)"></uv-icon>
+								</view>
+							</view>
+							<view class="simple_box flex" v-if="!el.isShow">
+								<view class="flex-1">
+									<view class="flex">
+										<view class="label">申请单号</view>
+										<view>{{el.rpt_no|defaultVal}}</view>
+									</view>
+									<view class="flex">
+										<view class="label">检查部位描述：</view>
+										<view>{{el.ckpt_name|defaultVal}}</view>
+									</view>
+									<view class="flex">
+										<view class="label">申请备注：</view>
+										<view>{{el.app_remark|defaultVal}}</view>
+									</view>
+								</view>
+								<view @click.stop="">
+									<view class="center_btn" :class="{align:el.againConfirm==1}" @click="singleConfirm(index)">{{el.againConfirm==1?'再次确认':'确认'}}</view>
+								</view>
+							</view>
+							<template v-else>
+								<view class="flex flex-wrap" style="margin-top: 8rpx;">
+									<view class="detail_item">
+										<view class="label">申请单号</view>
+										<view>{{el.rpt_no|defaultVal}}</view>
+									</view>
+									<view class="detail_item">
+										<view class="label">申请科室名称</view>
+										<view>{{el.rpt_dept|defaultVal}}</view>
+									</view>
+									<view class="detail_item">
+										<view class="label">检查名称</view>
+										<view>{{el.proj_name|defaultVal}}</view>
+									</view>
+									<view class="detail_item">
+										<view class="label">检查部位描述</view>
+										<view>{{el.ckpt_name|defaultVal}}</view>
+									</view>
+									<view class="detail_item">
+										<view class="label">检查科室代码</view>
+										<view>{{el.ckdpt_code|defaultVal}}</view>
+									</view>
+									<view class="detail_item">
+										<view class="label">检查科室名称</view>
+										<view>{{el.ckdpt_name|defaultVal}}</view>
+									</view>
+									<view class="detail_item">
+										<view class="label">检查地点</view>
+										<view>{{el.pos_name|defaultVal}}</view>
+									</view>
+									<view class="detail_item">
+										<view class="label">金额</view>
+										<view>{{el.cost|defaultVal}}</view>
+									</view>
+									<view class="detail_item">
+										<view class="label">预约时间</view>
+										<view>{{el.appoint_time|defaultVal}}</view>
+									</view>
+									<view class="detail_item">
+										<view class="label">患者信息核实科室代码</view>
+										<view>{{el.pat_verify_dept_code|defaultVal}}</view>
+									</view>
+									<view class="detail_item">
+										<view class="label">患者信息核实科室名称</view>
+										<view>{{el.pat_verify_dept_name|defaultVal}}</view>
+									</view>
+									<view class="detail_item">
+										<view class="label">患者信息核实技师工号</view>
+										<view>{{el.pat_verify_code|defaultVal}}</view>
+									</view>
+									<view class="detail_item">
+										<view class="label">患者信息核实技师姓名</view>
+										<view>{{el.pat_verify_name|defaultVal}}</view>
+									</view>
+									<view class="detail_item">
+										<view class="label">患者信息核实时间</view>
+										<view>{{el.pat_verify_time|defaultVal}}</view>
+									</view>
+									<view class="detail_item">
+										<view class="label">申请备注</view>
+										<view>{{el.app_remark|defaultVal}}</view>
+									</view>
+								</view>
+								<view class="flex" style="justify-content: flex-end;" @click.stop="">
+									<view class="center_btn" :class="{align:el.againConfirm==1}" @click="singleConfirm(index)">{{el.againConfirm==1?'再次确认':'确认'}}</view>
+								</view>
+							</template>
+						</view>
+					</view>
+				</scroll-view>
+			</template>
+		</view>
+		<view class="select_box padding-safe-area flex flex-between" v-if="!isNone">
+			<uv-checkbox-group v-model="checkboxValue" @change="checkAll">
+				<uv-checkbox label="全选" :size="32" :icon-size="32" :labelSize="32" name="all"></uv-checkbox>
+			</uv-checkbox-group>
+			<uv-button shape="circle" type="primary" @click="confirmAll">确认勾选选项</uv-button>
+		</view>
+		<view class="refresh_box" @click="refreshInfo">
+			<uv-icon name="reload" color="#fff" :size="34"></uv-icon>
+		</view>
+	</view>
+</template>
+<script>
+	// #ifdef APP
+	const testModule = uni.requireNativePlugin("zll-pda-PdaModule")
+	const eda50ScanModule = uni.requireNativePlugin('wm-Eda50QrcodeScan')
+	// #endif
+	export default {
+		data() {
+			return {
+				statusBarHeight: '',
+				checkboxValue: [],
+				isNone: true,
+				isFirst: true,
+				scanCode: '',
+				handCode:'',
+				wristbandCode:'',
+				main: '',
+				receiver: '',
+				filter: '',
+				allInfo: [],
+				activeType: '',
+				nowInfo: {},
+				singleIndex:''
+			}
+		},
+		filters: {
+			getType(val, isOne) {
+				switch (Number(val)) {
+					case 1:
+						return isOne ? '门' : '门诊';
+					case 2:
+						return isOne ? '急' : '急诊';
+					case 3:
+						return isOne ? '院' : '住院';
+					case 4:
+						return isOne ? '检' : '体检';
+					default:
+						return '';
+				}
+			},
+			defaultVal(val){
+				if(val||val===0) return val;
+				return '--'
+			}
+		},
+		computed: {
+			deptCode() {
+				return this.$store.state.deptCode||'921572';
+			}
+		},
+		onLoad() {
+			const sys = uni.$uv.sys();
+			// this.scanCode = 'WB30770242';
+			// this.scanConfirm();
+			this.bindUserCode();
+			this.statusBarHeight = sys.statusBarHeight;
+		},
+		onUnload() {
+			eda50ScanModule.releaseDevice();
+		},
+		methods: {
+			scanConfirm() {
+				if (this.isFirst) {
+					// console.log(333333333,this.deptCode)
+					if(!this.scanCode) return;
+					this.$api.getCodeInfo({
+						bar_code: this.scanCode,
+						ckdpt_code: this.deptCode
+					}).then(res => {
+						
+						if (!res || res.length == 0) {
+							this.isNone = true;
+							uni.$uv.toast('暂无数据');
+						} else {
+							this.allInfo = res;
+							let info = res[0];
+							info.list = info.list.map(el => {
+								el.isShow = false;
+								el.isCheck = false;
+								return el
+							});
+							const newInfo = uni.$uv.deepClone(info);
+							// console.log(3333333,newInfo.type)
+							this.activeType = newInfo.type;							
+							this.nowInfo = newInfo;
+							this.checkboxValue = [];
+							this.isNone = false;
+						}
+					})
+				}else{
+					let params = {};
+					if(this.singleIndex||this.singleIndex===0){
+						const data = this.nowInfo.list[this.singleIndex];
+						// params = {patientRecordsList:[{rpt_no:data.rpt_no,rpc_code:this.deptCode,type:data.type}],code:this.deptCode,wristbandCode:this.handCode};
+						params = {patientRecordsList:[{...data,rpc_code:this.deptCode}],code:this.deptCode,wristbandCode:this.handCode};
+						// console.log("scanConfirmsingle",params)
+					}else{
+						// params = {patientRecordsList:this.nowInfo.list.filter(el=>el.isCheck).map(el=>{
+						// 	return {
+						// 		rpt_no:el.rpt_no,
+						// 		rpc_code:this.deptCode,
+						// 		type:el.type
+						// 	}
+						// }),code:this.deptCode,wristbandCode:this.handCode}
+						params = {patientRecordsList:this.nowInfo.list.filter(el=>el.isCheck).map(el=>{
+							return {								
+								rpc_code:this.deptCode,
+								...el
+							}
+						}),code:this.deptCode,wristbandCode:this.handCode}
+						// console.log("scanConfirmAll",params)
+					}
+					this.confirmApi(params,()=>{
+						this.isFirst = true;
+					});
+				}
+			},
+			confirmAll(){
+				const list = this.nowInfo.list.filter(el=>el.isCheck);
+				if(list.length==0){
+					uni.$uv.toast('请先选择要确认的信息');
+				}else{
+					this.singleIndex = '';
+					// let params = {patientRecordsList:list.map(el=>{
+					// 		return {
+					// 			rpt_no:el.rpt_no,
+					// 			rpc_code:this.deptCode,
+					// 			type:el.type
+					// 		}
+					// 	}),code:this.deptCode}
+					let params = {patientRecordsList:list.map(el=>{
+							return {								
+								rpc_code:this.deptCode,
+								...el
+							}
+						}),code:this.deptCode}
+					// console.log("confirmAll",params)
+					if(this.nowInfo.type!=3){
+						this.confirmApi(params);
+					}else{
+						uni.showActionSheet({
+							title:'请扫描患者腕带确认',
+							itemList:['扫描','输入'],
+							success: ({tapIndex}) => {
+								if(tapIndex===1){
+									uni.showModal({
+										title:'提示',
+										editable:true,
+										placeholderText:'请输入腕带信息',
+										success:(res)=>{
+											if(res.confirm&&res.content){
+												this.confirmApi({...params,wristbandCode:res.content});
+											}
+										}
+									})
+								}else{
+									this.isFirst = false;
+									this.handleCode();
+								}
+							}
+						})
+					}
+				}
+			},
+			singleConfirm(index){
+				const data = this.nowInfo.list[index];
+				// const params = {patientRecordsList:[{rpt_no:data.rpt_no,rpc_code:this.deptCode,type:data.type}],code:this.deptCode};
+				const params = {patientRecordsList:[{...data,rpc_code:this.deptCode}],code:this.deptCode};
+				// console.log("singleConfirm",params)
+				if(this.nowInfo.type!=3){
+					this.confirmApi(params);
+				}else{
+					this.singleIndex = index;
+					uni.showActionSheet({
+						title:'请扫描患者腕带确认',
+						itemList:['扫描','输入'],
+						success: ({tapIndex}) => {
+							if(tapIndex===1){
+								uni.showModal({
+									title:'提示',
+									editable:true,
+									placeholderText:'请输入腕带信息',
+									success:(res)=>{
+										if(res.confirm&&res.content){
+											this.confirmApi({...params,wristbandCode:res.content});
+										}
+									}
+								})
+							}else{
+								this.isFirst = false;
+								this.handleCode();
+							}
+						}
+					})
+				}
+			},
+			confirmApi(data,fc){
+				if(!data) return;
+				// console.log(333333,data)
+				const idList = data.patientRecordsList.map(el=>el.rpt_no);
+				this.$api.confirmUser(data).then((res)=>{
+					this.nowInfo.list.forEach(el=>{
+						if(idList.includes(el.rpt_no)){
+							el.againConfirm = 1;
+						}
+					})
+					this.$forceUpdate();
+					// uni.$uv.toast(res);
+					uni.showModal({
+						title: '提示',
+						content: res||'未知错误',
+						showCancel: false
+					})
+					fc&&fc();
+				})
+			},
+			changeTab(index) {
+				let info = this.allInfo[index];
+				info.list = info.list.map(el => {
+					el.isShow = false;
+					el.isCheck = false;
+					return el
+				});
+				const newInfo = uni.$uv.deepClone(info);
+				this.activeType = newInfo.type;
+				this.nowInfo = newInfo;
+				this.checkboxValue = [];
+			},
+			checkIndex(index){
+				const isCheck = this.nowInfo.list[index].isCheck;
+				this.nowInfo.list[index].isCheck = !isCheck;
+				if(isCheck){
+					this.checkboxValue = [];
+				}else{
+					const isAll = this.nowInfo.list.every(el=>el.isCheck);
+					if(isAll){
+						this.checkboxValue = ['all'];
+					}else{
+						this.checkboxValue = [];
+					}
+				}
+			},
+			checkAll(val){
+				this.nowInfo.list.forEach(el=>{el.isCheck=val.length>0})
+			},
+			refreshInfo(){
+				this.isFirst = true;
+				this.scanConfirm();
+			},
+			handleCode() {
+				testModule.startScan();
+				this.testInitScan();
+				eda50ScanModule.startScan()
+				this.pluginInitScan()
+				setTimeout(()=>{
+					eda50ScanModule.releaseDevice()
+				},5000)
+			},
+			testInitScan() {
+				testModule.initScan((res) => {
+					// 有些PDA会自带换行符，trim函数处理下
+					let code = res.trim()
+					// uni.showModal({
+					// 	title: '提示',
+					// 	content: code||'未知错误',
+					// 	showCancel: false
+					// })
+					//code就是扫描获取的值
+					if (code) {
+						
+						if(this.isFirst){
+							this.scanCode = code;
+						}else{
+							this.handCode = code;
+						}
+						uni.$uv.throttle(this.scanConfirm, 1000);
+					}
+				})
+			},
+			pluginInitScan(){
+				eda50ScanModule.initDevice(false,res=>{
+					// 有些PDA会自带换行符，trim函数处理下
+					let code = res.trim()
+					// uni.showModal({
+					// 	title: '提示1',
+					// 	content: code||'未知错误',
+					// 	showCancel: false
+					// })
+					//code就是扫描获取的值
+					if (code) {
+						if(this.isFirst){
+							this.scanCode = code;
+						}else{
+							this.handCode = code;
+						}
+						uni.$uv.throttle(this.scanConfirm, 1000);
+					}
+				})
+			},
+			bindUserCode() {
+				this.testInitScan();
+				this.pluginInitScan();
+			}
+		}
+	}
+</script>
+
+<style lang="scss" scoped>
+	.flex_container {
+		background: #F7FAFC;
+	}
+	.refresh_box{
+		width: 76rpx;
+		height: 76rpx;
+		border-radius: 50%;
+		background: #1B86FF;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: fixed;
+		bottom: 170rpx;
+		right: 16rpx;
+		z-index: 66;
+	}
+	.center_btn{
+		padding: 0 32rpx;
+		height: 50rpx;
+		line-height: 50rpx;
+		border-radius: 26rpx;
+		text-align: center;
+		color: #fff;
+		font-size: 24rpx;
+		background: #409EFF;
+		&.align{
+			background: #F5A250;
+		}
+	}
+	.bg_box {
+		width: 100%;
+		box-sizing: initial;
+		height: 88rpx;
+		position: absolute;
+		top: 0;
+		left: 0;
+
+		image {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+		}
+	}
+
+	.search_box {
+		height: 88rpx;
+		padding: 0 16rpx;
+		gap: 16rpx;
+		position: relative;
+		z-index: 2;
+
+		.icon_wrap {
+			background: #2D7EE7;
+			padding: 8rpx;
+			border-radius: 8rpx;
+			margin-left: 16rpx;
+			border: 2rpx solid rgba(255, 255, 255, 0.12);
+		}
+	}
+
+	.container_box {
+		overflow: hidden;
+	}
+
+	.empty_box {
+		color: rgba(0, 0, 0, 0.25);
+		font-size: 28rpx;
+		line-height: 1.6;
+		text-align: center;
+		gap: 16rpx;
+		padding-top: 300rpx;
+
+		image {
+			width: 150rpx;
+			height: 150rpx;
+		}
+	}
+
+	.user_box {
+		padding: 16rpx;
+		background: #fff;
+		gap: 16rpx;
+
+		.name {
+			color: rgba(0, 0, 0, 0.85);
+			font-size: 28rpx;
+			font-weight: bold;
+		}
+
+		.sex {
+			padding: 4rpx 8rpx;
+			border-radius: 4rpx;
+			font-size: 20rpx;
+			display: inline-flex;
+
+			text {
+				margin-left: 4rpx;
+			}
+
+			&.man {
+				background: #F0F9EB;
+				color: #67C23A;
+			}
+
+			&.woman {
+				background: #FBF0F6;
+				color: #D96BA7;
+			}
+		}
+
+		.type_box {
+			font-size: 24rpx;
+			color: rgba(0, 0, 0, 0.65);
+
+			view {
+				width: 32rpx;
+				height: 32rpx;
+				background: #E8F3FF;
+				border-radius: 50%;
+				border: 2rpx solid #499EFF;
+				color: #1B86FF;
+				font-size: 16rpx;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin-right: 8rpx;
+			}
+		}
+
+		.val {
+			font-size: rgba(0, 0, 0, 0.85);
+			font-size: 28rpx;
+			font-weight: bold;
+			margin-top: 12rpx;
+			text-align: right;
+		}
+	}
+
+	.check_container {
+		box-sizing: border-box;
+		overflow: auto;
+		padding: 16rpx;
+
+		.check_item {
+			background: #fff;
+			padding: 16rpx;
+			margin-bottom: 16rpx;
+			border-radius: 8rpx;
+
+			&:nth-last-child(1) {
+				margin-bottom: 0;
+			}
+
+			.check_box {
+				width: 32rpx;
+				height: 32rpx;
+				border-radius: 8rpx;
+				border: 2rpx solid rgba(0, 0, 0, 0.15);
+				margin-right: 16rpx;
+
+				&.is_check {
+					border-color: #2979ff;
+					background: #2979ff;
+				}
+			}
+
+			.name {
+				color: rgba(0, 0, 0, 0.85);
+				font-size: 28rpx;
+				font-weight: bold;
+				margin-right: 16rpx;
+			}
+
+			.part {
+				padding: 0 8rpx;
+				height: 38rpx;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: #E8F3FF;
+				color: #1B86FF;
+				font-size: 24rpx;
+				line-height: 1;
+				border-radius: 4rpx;
+			}
+
+			.is_show {
+				color: rgba(0, 0, 0, 0.85);
+				font-size: 24rpx;
+				margin-right: 4rpx;
+			}
+
+			.simple_box {
+				color: rgba(0, 0, 0, 0.65);
+				font-size: 24rpx;
+				margin-top: 8rpx;
+
+				.label {
+					width: 180rpx;
+				}
+			}
+
+			.detail_item {
+				width: 50%;
+				color: rgba(0, 0, 0, 0.65);
+				font-size: 24rpx;
+				margin-bottom: 8rpx;
+
+				.label {
+					color: rgba(0, 0, 0, 0.45);
+					font-size: 20rpx;
+				}
+			}
+		}
+	}
+
+	.select_box {
+		box-sizing: initial;
+		height: 100rpx;
+		padding: 0 16rpx;
+		background: #fff;
+	}
+
+	.tabs {
+		background: #fff;
+
+		view {
+			width: 25%;
+			height: 74rpx;
+			text-align: center;
+			line-height: 74rpx;
+			color: rgba(0, 0, 0, 0.65);
+			font-size: 28rpx;
+
+			&.active {
+				color: #1B86FF;
+				border-bottom: 4rpx solid #1B86FF;
+			}
+		}
+	}
+</style>

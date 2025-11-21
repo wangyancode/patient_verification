@@ -1,0 +1,223 @@
+import Request from '../libs/request'
+import { base64_encode, base64_decode} from '../libs/base64';
+import md5 from '../libs/md5';
+import underscore from '../libs/underscore';
+import config from '../config';
+var util = {};
+
+util.navigateTo = function(url){
+	uni.navigateTo({
+		url:url
+	})
+}
+
+util.redirectTo = function(url){
+	uni.redirectTo({
+		url:url
+	})
+}
+util.reLaunch = function(url){
+	uni.reLaunch({
+		url:url
+	})
+}
+
+util.goback = function(){
+	uni.navigateBack({
+		delta:1
+	})
+}
+
+/**
+ * base64 加密
+ * @param {Object} str
+ */
+util.base64Encode = function(str) {
+	return base64_encode(str)
+};
+
+/**
+ * base64 解密
+ * @param {Object} str
+ */
+util.base64Decode = function(str) {
+	return base64_decode(str)
+};
+
+/**
+ * MD5加密
+ * @param {Object} str
+ */
+util.md5 = function(str) {
+	return md5(str)
+};
+
+
+
+function getQuery(url) {
+	var theRequest = [];
+	if (url.indexOf("?") != -1) {
+		var str = url.split('?')[1];
+		var strs = str.split("&");
+		for (var i = 0; i < strs.length; i++) {
+			if (strs[i].split("=")[0] && unescape(strs[i].split("=")[1])) {
+				theRequest[i] = {
+					'name': strs[i].split("=")[0],
+					'value': unescape(strs[i].split("=")[1])
+				}
+			}
+		}
+	}
+	return theRequest;
+}
+/*
+* 获取链接某个参数
+* url 链接地址
+* name 参数名称
+*/
+function getUrlParam(url, name) {
+	var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
+	var r = url.split('?')[1].match(reg);  //匹配目标参数
+	if (r != null) return unescape(r[2]); return null; //返回参数值
+}
+
+util.getSign = function (url, data, token) {
+	var querystring = '';
+	var sign = getUrlParam(url, 'sign');
+	if (sign || (data && data.sign)) {
+		return false;
+	} else {
+		if (url) {
+			querystring = getQuery(url);
+		}
+		if (data) {
+			var theRequest = [];
+			for (let param in data) {
+				if (param && data[param]) {
+					theRequest = theRequest.concat({
+						'name': param,
+						'value': data[param]
+					})
+				}
+			}
+			querystring = querystring.concat(theRequest);
+		}
+		//排序
+		querystring = underscore.sortBy(querystring, 'name');
+		//去重
+		querystring = underscore.uniq(querystring, true, 'name');
+		var urlData = '';
+		for (let i = 0; i < querystring.length; i++) {
+			if (querystring[i] && querystring[i].name && querystring[i].value) {
+				urlData += querystring[i].name + '=' + querystring[i].value;
+				if (i < (querystring.length - 1)) {
+					urlData += '&';
+				}
+			}
+		}
+		token = token ? token : config.token;
+		sign = md5(urlData + token);
+		return sign;
+	}
+};
+
+/**
+ * 构造地址
+ * @param {Object} action 系统中的controller, action, do，格式为 'wxapp/home/navs'
+ * @param {Object} querystring   格式为 {参数名1 : 值1, 参数名2 : 值2}
+ */
+util.url = function(action, querystring) {
+	var url = config.siteroot;
+	if (action) {
+		url+=action;
+	}
+	return url;
+}
+
+util.httpGet = function(url, options = {}){
+	const http = new Request()
+	http.setConfig((config) => {
+	  config.header = {
+	    ...config.header,
+	    a: 1,
+	    b: 2
+	  }
+	  return config
+	})
+	var url = util.url(url);
+	var sign = util.getSign(url, options.params);
+	if (sign) {
+		url = url + "&sign=" + sign;
+	}
+
+	return http.get(url,options);
+}
+
+
+util.httpPost = function(url, options = {}){
+	const http = new Request()
+	http.setConfig((config) => {
+	  config.header = {
+	    ...config.header,
+	    a: 1,
+	    b: 2
+	  }
+	  return config
+	})
+
+
+	var url = util.url(url);
+	var sign = util.getSign(url, options.params);
+	if (sign) {
+		url = url + "&sign=" + sign;
+	}
+
+
+	return http.post(url,options);
+}
+
+util.httpPut = function(url, options = {}){
+	const http = new Request()
+	http.setConfig((config) => {
+	  config.header = {
+	    ...config.header,
+	    a: 1,
+	    b: 2
+	  }
+	  return config
+	})
+
+
+	var url = util.url(url);
+	var sign = util.getSign(url, options.params);
+	if (sign) {
+		url = url + "&sign=" + sign;
+	}
+
+
+	return http.put(url,options);
+}
+
+util.httpDelete = function(url, options = {}){
+	const http = new Request()
+	http.setConfig((config) => {
+	  config.header = {
+	    ...config.header,
+	    a: 1,
+	    b: 2
+	  }
+	  return config
+	})
+
+
+	var url = util.url(url);
+	var sign = util.getSign(url, options.params);
+	if (sign) {
+		url = url + "&sign=" + sign;
+	}
+
+
+	return http.delete(url,options);
+}
+
+module.exports = util;

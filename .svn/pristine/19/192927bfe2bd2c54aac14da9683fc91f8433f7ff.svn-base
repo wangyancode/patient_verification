@@ -1,0 +1,187 @@
+//package com.dincher.project.scm.controller;
+//
+//
+//import com.dincher.framework.web.controller.BaseController;
+//import com.dincher.framework.web.domain.RequestQueryBody;
+//import com.dincher.framework.web.domain.AjaxResult;
+//import com.dincher.framework.web.domain.ResponseEntity;
+//import com.dincher.framework.web.page.TableDataInfo;
+//import com.dincher.framework.web.util.ResponseUtil;
+//import com.dincher.project.scm.domain.DTO.*;
+//import com.dincher.project.scm.domain.vo.MessageVO;
+//import io.swagger.annotations.*;
+//import org.springframework.web.bind.annotation.*;
+//import javax.annotation.Resource;
+//import javax.servlet.http.HttpServletRequest;
+//import java.util.List;
+//import com.dincher.project.scm.domain.vo.DeliveryOrderVO;
+//import com.dincher.project.scm.service.DeliveryOrderService;
+//
+///**
+// * 配送单(scm_delivery_order)控制层
+// *
+// * @author wangbin
+// * @date 2023-12-06 11:45:08
+// */
+//@RestController
+//@RequestMapping("/deliveryOrder")
+//@Api(tags = "配送单(scm_delivery_order)APi")
+//public class DeliveryOrderController extends BaseController{
+//
+//    @Resource
+//    private DeliveryOrderService deliveryOrderService;
+//
+//    /**
+//     * @author wangbin
+//     * @date 2023-12-06 11:45:08
+//     *
+//     */
+//    @PostMapping(value = "/page")
+//    @ApiOperation(value = "分页查询")
+//    public TableDataInfo<List<DeliveryOrderVO>> page(@RequestBody RequestQueryBody<DeliveryOrderVO> requestQueryBody){
+//        startPage(requestQueryBody);
+//        List<DeliveryOrderVO> DeliveryOrderVOList = deliveryOrderService.selectDataList(requestQueryBody.getParam());
+//        return getDataTable(DeliveryOrderVOList);
+//    }
+//
+//    /**
+//     * @author wangbin
+//     * @date 2023-12-06 11:45:08
+//     *
+//     */
+//    @PostMapping(value = "/list")
+//    @ApiOperation(value = "列表查询（非分页）")
+//    public ResponseEntity<List<DeliveryOrderVO>> list(@RequestBody DeliveryOrderVO deliveryOrderVO){
+//        return ResponseUtil.success(deliveryOrderService.selectDataList(deliveryOrderVO));
+//    }
+//
+//    /**
+//     * @author wangbin
+//     * @date 2023-12-06 11:45:08
+//     *
+//     */
+//    @GetMapping("{id}")
+//    @ApiOperation(value = "通过主键查询单条数据")
+//    public ResponseEntity<DeliveryOrderVO> selectOne(@PathVariable Integer id) {
+//        return ResponseUtil.success(deliveryOrderService.getById(id));
+//    }
+//
+//   /**
+//     * @author wangbin
+//     * @date 2023-12-06 11:45:08
+//     *
+//     */
+//    @PostMapping(value ="/save")
+//    @ApiOperation(value = "新增数据")
+//    public ResponseEntity insert(@RequestBody DeliveryOrderVO deliveryOrderVO) {
+//        return ResponseUtil.success(deliveryOrderService.save(deliveryOrderVO));
+//    }
+//
+//    /**
+//     * @author wangbin
+//     * @date 2023-12-06 11:45:08
+//     *
+//     */
+//    @PutMapping(value ="/update")
+//    @ApiOperation(value = "修改数据")
+//    public ResponseEntity update(@RequestBody DeliveryOrderVO deliveryOrderVO) {
+//        return ResponseUtil.success(deliveryOrderService.updateById(deliveryOrderVO));
+//    }
+//
+//    /**
+//     * @author wangbin
+//     * @date 2023-12-06 11:45:08
+//     *
+//     */
+//    @DeleteMapping(value ="/delete")
+//    @ApiOperation(value = "删除数据")
+//    public ResponseEntity delete(@RequestBody List<Integer> ids) {
+//        return ResponseUtil.success(deliveryOrderService.removeByIds(ids));
+//    }
+//
+//    /**
+//     * @author wangbin
+//     * @date 2023-12-06 11:45:08
+//     *
+//     */
+//    @PostMapping(value = "/allStatusQueryPage")
+//    @ApiOperation(value = "待验收/验收中/已验收分页查询")
+//    public TableDataInfo<List<DeliveryOrderQueryReturnDTO>> allStatusQueryPage(@RequestBody RequestQueryBody<DeliveryOrderQueryDTO> requestQueryBody){
+//        startPage(requestQueryBody);
+//        List<DeliveryOrderQueryReturnDTO> DeliveryOrderVOList = deliveryOrderService.allStatusQueryPage(requestQueryBody.getParam());
+//        return getDataTable(DeliveryOrderVOList);
+//    }
+//
+//    /**
+//     * @author wangbin
+//     * @date 2023-12-06 11:45:08
+//     *
+//     */
+//    @PostMapping(value = "/queryDetails")
+//    @ApiOperation(value = "具体详情查询")
+//    public ResponseEntity<List<DeliveryOrderQueryResponseDTO>> queryDetails(@RequestBody DeliveryOrderDetailRequestDTO deliveryOrderDetailRequestDTO){
+//        List<DeliveryOrderQueryResponseDTO> DeliveryOrderVOList = deliveryOrderService.queryDetails(deliveryOrderDetailRequestDTO);
+//        return ResponseUtil.success(DeliveryOrderVOList);
+//    }
+//
+//    /**
+//     * @author wangbin
+//     * @date 2023-12-06 11:45:08
+//     *
+//     */
+//    @PostMapping(value = "/queryDetailsAllBox")
+//    @ApiOperation(value = "合并详情查询待验收里查询具体详情")
+//    public ResponseEntity<List<DeliveryOrderQueryResponseDTO>> queryDetailsAllBox(@RequestBody DeliveryOrderDetailRequestDTO deliveryOrderDetailRequestDTO){
+//        List<DeliveryOrderQueryResponseDTO> DeliveryOrderVOList = deliveryOrderService.queryDetailsAllBox(deliveryOrderDetailRequestDTO);
+//        return ResponseUtil.success(DeliveryOrderVOList);
+//    }
+//
+//    /**
+//     * @author wangbin
+//     * @date 2023-12-06 11:45:08
+//     *
+//     */
+//    @PostMapping(value = "/checkDrugs")
+//    @ApiOperation(value = "单独验收")
+//    public ResponseEntity<DeliveryOrderVO> checkDrugs(@RequestBody CheckDrugsRequestDTO checkDrugsRequestDTO){
+//        DeliveryOrderVO checkDrugsReturn  = deliveryOrderService.checkDrugs(checkDrugsRequestDTO);
+//        return ResponseUtil.success(checkDrugsReturn);
+//    }
+//
+//    /**
+//     * @author wangbin
+//     * @date 2023-12-06 11:45:08
+//     *
+//     */
+//    @PostMapping(value = "/mergeCheckDrugs")
+//    @ApiOperation(value = "合并验收")
+//    public ResponseEntity<MergeCheckDrugsRequestDTO> mergeCheckDrugs(@RequestBody MergeCheckDrugsRequestDTO mergeCheckDrugsRequestDTO){
+//        MergeCheckDrugsRequestDTO checkDrugsReturn = deliveryOrderService.mergeCheckDrugs(mergeCheckDrugsRequestDTO);
+//        return ResponseUtil.success(checkDrugsReturn);
+//    }
+//
+//    /**
+//     * @author wangbin
+//     * @date 2023-12-06 11:45:08
+//     *
+//     */
+//    @PostMapping(value = "/synchronizeData")
+//    @ApiOperation(value = "同步数据")
+//    public ResponseEntity<DeliveryOrderVO> synchronizeData(@RequestBody SynchornizeDataRequestDTO synchornizeDataRequestDTO, HttpServletRequest request){
+//        DeliveryOrderVO deliveryOrderVOReturn = deliveryOrderService.synchronizeData(synchornizeDataRequestDTO, request);
+//        return ResponseUtil.success(deliveryOrderVOReturn);
+//    }
+//
+//    /**
+//     * @author wangbin
+//     * @date 2023-12-06 11:45:08
+//     *
+//     */
+//    @PostMapping(value = "/allStatusQueryCount")
+//    @ApiOperation(value = "待验收/验收中/已验收数量查询")
+//    public ResponseEntity<DeliveryOrderQueryCountDTO> allStatusQueryCount(@RequestBody DeliveryOrderQueryDTO requestQueryBody){
+//        DeliveryOrderQueryCountDTO deliveryOrderQueryReturnDTO = deliveryOrderService.allStatusQueryCount(requestQueryBody);
+//        return ResponseUtil.success(deliveryOrderQueryReturnDTO);
+//    }
+//}
+//

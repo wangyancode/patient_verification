@@ -1,0 +1,89 @@
+<template>
+	<view class="">
+		<view class=cu-tabbar-height></view>
+		<view class="cu-tabbar-body">
+			<view class="cu-bar tabbar foot u-text-center u-flex">
+				<view class="action u-flex-1" :class="{ 'action_active': currentIndex == 1 }"  @click="$util.reLaunch('/pages/account/index')">
+					<image src="../static/images/home_current.png" mode="" v-if="currentIndex==1"></image>
+					<image src="../static/images/home.png" mode="" v-else></image>
+					<view class="action_text">账户</view>
+				</view>
+				<view class="action u-flex-1" :class="{ 'action_active': currentIndex == 2 }" @click="$util.reLaunch('/pages/welfare/index')">
+					<image src="../static/images/help_current.png" mode="" v-if="currentIndex==2"></image>
+					<image src="../static/images/help.png" mode="" v-else></image>
+					<view class="action_text">首页</view>
+				</view>
+			<!-- 	<view class="action u-flex-1" :class="{ 'action_active': currentIndex == 3 }" @click="$util.reLaunch('/pages/store/index')">
+					<image src="../static/images/shop_current.png" mode="" v-if="currentIndex==3"></image>
+					<image src="../static/images/shop.png" mode="" v-else></image>
+					<view class="action_text">商城</view>
+				</view> -->
+				<view class="action u-flex-1" :class="{ 'action_active': currentIndex == 4 }" @click="$util.reLaunch('/pages/member/index')">
+					<image src="../static/images/my_current.png" mode="" v-if="currentIndex==4"></image>
+					<image src="../static/images/my.png" mode="" v-else></image>
+					<view class="action_text">个人中心</view>
+				</view>
+	
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+export default {
+	props: {
+		currentIndex: {
+			type: Number,
+			default: 1
+		}
+	},
+	data() {
+		return {};
+	},
+	onShow() {
+		console.log(this.currentIndex);
+	},
+	methods: {}
+};
+</script>
+
+<style>
+	
+	
+	.cu-tabbar-height{
+		min-height: 120upx;
+	}
+	.cu-tabbar-body{
+		    position: fixed;
+		    width: 100%;
+		    bottom: 0;
+		    z-index: 1024;
+			background-color: #FFFFFF;
+	}
+	.cu-bar{
+		    display: -webkit-box;
+		    display: -webkit-flex;
+		    display: flex;
+		    position: relative;
+		    -webkit-box-align: center;
+		    -webkit-align-items: center;
+		    align-items: center;
+		    min-height: 50px;
+		    -webkit-box-pack: justify;
+		    -webkit-justify-content: space-between;
+		    justify-content: space-between;
+	}
+
+	.cu-bar.tabbar .action image {
+		width: 40upx;
+		height: 40upx;
+	}
+   .action_text{
+		color: #7b8293;
+	}
+	.action_active .action_text{
+		color: #0a84ce;
+	}
+	
+
+</style>

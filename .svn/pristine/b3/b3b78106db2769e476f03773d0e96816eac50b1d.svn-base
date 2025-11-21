@@ -1,0 +1,17 @@
+import $util from "../utils/util"
+import $request  from '../utils/request'
+
+export default {
+	setting: '',
+	__init() {
+		console.log($request);
+		this.setting = uni.getStorageSync("setting");
+		if (this.setting == '') {
+			$request.get($util.url('home/Setting')).then(res => {
+				this.setting = res.data.data.setting
+				uni.setStorageSync("setting", this.setting);
+			});
+		}
+		return this.setting
+	},
+}
